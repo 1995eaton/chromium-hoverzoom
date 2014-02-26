@@ -1,12 +1,35 @@
-var log = console.log.bind(console);
-var container, container_img, container_caption, container_album_index;
-var album_images;
-var album_captions;
-var cur_index;
+var container, container_img, container_caption, container_album_index, album_images, album_captions, hover_timeout, cur_index, caption_height, x, y, isImgurAlbum, timeout_length;
 var img_match = new RegExp("\.(png|jpeg|jpg|gif)(|:large)$");
-var x, y;
-var isImgurAlbum = false;
-var caption_height = 0;
+var log = console.log.bind(console);
+
+timeout_length = 200;
+fade_duration = 25;
+
+var fadeContainer = {
+  In: function() {
+    container.style.opacity = "0";
+    var i = 0;
+    var fade = setInterval(function() {
+      i += 1/fade_duration;
+      container.style.opacity = i;
+      if (i >= 1) {
+        clearInterval(fade);
+      }
+    }, 4);
+  },
+  Out: function(callback) {
+    container.style.opacity = "1";
+    var i = 1;
+    var fade = setInterval(function() {
+      i -= 1/fade_duration;
+      container.style.opacity = i;
+      if (i <= 0) {
+        callback();
+        clearInterval(fade);
+      }
+    }, 4);
+  }
+};
 
 function adjustImageSize() {
   container.style.left = x+20+"px";
@@ -17,11 +40,11 @@ function adjustImageSize() {
   }
   if (x > window.innerWidth/2) {
     if (x - container_img.clientWidth-20 < 0) {
-      container.style.left = 0+"px";
+      container.style.left = 5+"px";
     } else {
-      container.style.left = x - container_img.clientWidth-40+"px";
+      container.style.left = x - container_img.clientWidth-20+"px";
     }
-    container_img.style.maxWidth = x+"px";
+    container_img.style.maxWidth = x - 20 + "px";
   } else {
     container_img.style.maxWidth = window.innerWidth-x-40+"px";
   }
@@ -32,12 +55,8 @@ function adjustImageSize() {
   } else {
     container.style.top = document.body.scrollTop+y+10+"px";
   }
-  //if (caption_height != 0) {
-  //  if (container.offsetHeight > window.innerHeight) {
-      container.style.height = container_img.offsetHeight + caption_height + "px";
-      container_img.style.maxHeight = window.innerHeight - caption_height + "px";
-    //}
-  //}
+  container.style.height = container_img.offsetHeight + caption_height + 2 +  "px";
+  container_img.style.maxHeight = window.innerHeight - caption_height - 20 + "px";
 }
 
 function getImgurAlbum(id) {
@@ -61,41 +80,58 @@ function getImgurAlbum(id) {
   return album_images[0].innerHTML;
 }
 
+function waitForLoad(url) {
+  var test_img = new Image();
+  test_img.src = url;
+  container.style.display = "block";
+  var waitForLoad = setInterval(function() {
+    adjustImageSize();
+    if (test_img.height != 0) {
+      setTimeout(function() {
+        adjustImageSize();
+        clearInterval(waitForLoad);
+      }, 50);
+    }
+  }, 10);
+}
+
 window.onkeydown = function(e) {
   if (isImgurAlbum) {
     var key = e.which;
     var album_length = album_images.length;
     if (album_length > 1) {
-      if (key == 39) { //right
+      if (key == 39) { //right arrow
         if (cur_index + 1 < album_length) {
           cur_index++;
         } else {
           cur_index = 0;
         }
+        waitForLoad(album_images[cur_index].innerHTML);
         container_album_index.innerText = cur_index+1+"/"+album_images.length;
         container_img.src = album_images[cur_index].innerHTML;
         if (album_captions[cur_index].innerHTML != "") {
           container_caption.innerText = album_captions[cur_index].innerHTML;
           container_caption.style.display = "block";
         } else {
+          container_caption.innerHTML = "";
           container_caption.style.display = "none";
         }
-        adjustImageSize();
-      } else if (key == 37) { //left
+      } else if (key == 37) { //left arrow
         if (cur_index - 1 < 0) {
           cur_index = album_length - 1;
         } else {
           cur_index--;
         }
+        waitForLoad(album_images[cur_index].innerHTML);
         container_album_index.innerText = cur_index+1+"/"+album_images.length;
         container_img.src = album_images[cur_index].innerHTML;
         if (album_captions[cur_index].innerHTML != "") {
           container_caption.innerText = album_captions[cur_index].innerHTML;
           container_caption.style.display = "block";
         } else {
+          container_caption.innerHTML = "";
           container_caption.style.display = "none";
         }
-        adjustImageSize();
       }
     }
   }
@@ -117,42 +153,42 @@ function parseUrl(url) {
 }
 
 function appendImage(image_url) {
+  fadeContainer.In();
   container.style.top = document.body.scrollTop+10+"px";
   container_img.style.maxWidth = window.innerWidth+"px";
   container_img.style.maxHeight = window.innerHeight-20-caption_height+"px";
-  var test_img = new Image();
-  test_img.src = image_url;
   container_img.src = image_url;
-  var waitForLoad = setInterval(function() {
-    if (test_img.height != 0) {
-      container.style.display = "block";
-      adjustImageSize();
-      clearInterval(waitForLoad);
-    }
-  }, 100);
+  waitForLoad(image_url);
 }
 
 function getUrlPath(elem) {
   var url;
+  if (!container) return;
   switch (elem.nodeName) {
     case "A":
       container_album_index.style.display = "none";
       container_caption.innerHTML = "";
       container_caption.style.display = "none";
-      url = parseUrl(elem.href);
-      if (url) {
-        appendImage(url);
-      }
+      setTimeout(function() {
+        if (hover_timeout) return;
+        url = parseUrl(elem.href);
+        if (url) {
+          appendImage(url);
+        }
+      }, timeout_length);
       break;
     case "IMG":
       container_album_index.style.display = "none";
       container_caption.innerHTML = "";
       container_caption.style.display = "none";
       if (elem.parentNode.nodeName = "A") {
-        url = parseUrl(elem.parentNode.href);
-        if (url) {
-          appendImage(url);
-        }
+        setTimeout(function() {
+          if (hover_timeout) return;
+          url = parseUrl(elem.parentNode.href);
+          if (url) {
+            appendImage(url);
+          }
+        }, timeout_length);
       }
       break;
   }
@@ -167,12 +203,16 @@ window.onmousemove = function(e) {
 }
 
 window.onmouseover = function(e) {
-  if (/IMG|A/.test(e.target.nodeName)) {
+  if (/(IMG|A)/.test(e.target.nodeName)) {
+    hover_timeout = false;
     getUrlPath(e.target);
-  } else if (container) {
-    container.style.display = "none";
-    container_caption.style.display = "none";
-    container_album_index.style.display = "none";
+  } else {
+    hover_timeout = true;
+    if (container) {
+      container.style.display = "none";
+      container_caption.style.display = "none";
+      container_album_index.style.display = "none";
+    }
   }
 };
 
