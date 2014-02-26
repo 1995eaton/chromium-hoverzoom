@@ -1,0 +1,31 @@
+{
+  // Required
+  "manifest_version": 2,
+  "name": "Image Zoom",
+  "version": "1.0.0",
+
+  // Recommended
+  "description": "A simple alternative to Hover Zoom and Imagus",
+
+  // Pick one (or none)
+
+  // Optional
+  "author": "Jake Eaton",
+
+  "permissions": [
+    "<all_urls>"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": [
+             "main.js"
+            ],
+      "css": [
+              "style.css"
+             ],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}
