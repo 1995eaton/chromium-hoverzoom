@@ -3,6 +3,9 @@
   "name": "Image Zoom",
   "version": "1.0.1",
   "description": "A simple alternative to Hover Zoom and Imagus",
+  "icons": { "16": "icons/icon16.png",
+             "48": "icons/icon48.png",
+             "128": "icons/icon128.png" },
   "author": "Jake Eaton",
   "permissions": [
     "<all_urls>"
