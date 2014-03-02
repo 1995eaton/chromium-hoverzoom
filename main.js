@@ -1,5 +1,5 @@
 var container, container_img, container_caption, container_album_index, hover_timeout, caption_height, x, y, timeout_length, currentElement;
-var img_match = new RegExp("\.(png|jpeg|jpg|gif)(\\?([^?])+$)?(:large)?$");
+var img_match = new RegExp("\.(png|jpeg|jpg|gif)(\\?([^?])+$)?(:large)?$", "i");
 var log = console.log.bind(console);
 var imageLoaded = false;
 
@@ -70,9 +70,9 @@ var matchSite = {
   },
 
   imgur: function(url) {
-
     imgur.isImgurAlbum = false;
     var m = img_match.test(url);
+    if (!/http(s?):\/\/imgur.com/.test(url)) return;
     if (/(http(s)?:\/\/|www\.)imgur\.com/.test(url)) {
       if (/\/random/.test(url)) return;
       if (!m && /\/a\//.test(url)) {
@@ -88,7 +88,22 @@ var matchSite = {
       if (updated_url == "/" || updated_url == null) return;
       else return "https://i.imgur.com/"+updated_url+".jpg";
     }
-    } else if (m) {
+    } else {
+      return url+"jpg";
+    }
+  },
+
+  wikimedia: function(url) {
+    var r = new RegExp("http(s)?:\/\/.*(upload\.wikimedia|wikipedia)\.org.*\.(png|svg|jpg|jpeg|gif)", "i");
+    if (r.test(url)) {
+      url = url.replace(/\/thumb/, "");
+      url = url.replace(/\/([^/]+)$/, "");
+      return url;
+    }
+  },
+
+  normal: function(url) {
+    if (img_match.test(url)) {
       return url;
     }
   }
@@ -110,38 +125,66 @@ var fadeContainer = {
 };
 
 function adjustImageSize() {
-  container.style.left = x+20+"px";
 
+  var offset = 15;
   if (container_caption.style.display != "none") {
     caption_height = container_caption.clientHeight;
   } else {
     caption_height = 0;
   }
 
-  if (x > window.innerWidth/2) {
-
-    if (x - container_img.clientWidth-20 < 0) {
-      container.style.left = 5+"px";
+  if (x < window.innerWidth/2) {
+    if (container_img.offsetWidth < window.innerWidth) {
+      container.style.left = offset + x +  "px";
+      container.style.maxWidth = window.innerWidth - x - 3*offset + "px";
+      container_img.style.maxWidth = window.innerWidth - x - 3*offset - 4 + "px";
     } else {
-      container.style.left = x - container_img.clientWidth-20+"px";
+      container.style.left = offset + "px";
+      container.style.maxWidth = window.innerWidth - 3*offset + "px";
+      container_img.style.maxWidth = window.innerWidth - 3*offset - 4 + "px";
     }
-    container_img.style.maxWidth = x - 20 + "px";
-
   } else {
-    container_img.style.maxWidth = window.innerWidth-x-40+"px";
+    if (container_img.offsetWidth < window.innerWidth) {
+      container.style.left = x - offset - container_img.offsetWidth +  "px";
+      container.style.maxWidth = x - 3*offset + "px";
+      container_img.style.maxWidth = x - 3*offset - 4 + "px";
+    } else {
+      container.style.left = offset + "px";
+      container.style.maxWidth = window.innerWidth - 3*offset + "px";
+      container_img.style.maxWidth = window.innerWidth - 3*offset - 4 + "px";
+    }
   }
 
-  if (y - container_img.clientHeight < 0) {
-    container.style.top = document.body.scrollTop+10+"px";;
-  } else if (y+container_img.clientHeight > window.innerHeight/2) {
-    container.style.top = document.body.scrollTop+y-container_img.clientHeight+"px";
+  if (y - container.offsetHeight < offset*2) {
+    if (y > window.innerHeight/2) {
+      container.style.top = document.body.scrollTop + offset + "px";
+    } else {
+      if (y + 2*offset + container.offsetHeight > window.innerHeight) {
+        container.style.top = document.body.scrollTop+ y - (container.offsetHeight-(window.innerHeight-y)) - offset + "px";;
+      } else {
+        container.style.top = document.body.scrollTop + offset + y + "px";;
+      }
+    }
+  } else if (y + container.offsetHeight > window.innerHeight/2 - 2*offset) {
+    container.style.top = document.body.scrollTop + y - container.offsetHeight - offset + "px";
   } else {
-    container.style.top = document.body.scrollTop+y+10+"px";
+    container.style.top = document.body.scrollTop + y + offset + "px";
   }
-
+  if (container_img.offsetWidth > container_img.offsetHeight) {
+    if (y < window.innerHeight/2) {
+      container.style.height = container_img.offsetHeight + caption_height + 2 +  "px";
+      container_img.style.maxHeight = window.innerHeight - y - caption_height - 2*offset + "px";
+    } else {
+      container.style.height = container_img.offsetHeight + caption_height + 2 +  "px";
+      container_img.style.maxHeight = y - caption_height - 2*offset + "px";
+    }
+  }
+  container_img.style.maxHeight = window.innerHeight - caption_height - 2*offset - 4 + "px";
   container.style.height = container_img.offsetHeight + caption_height + 2 +  "px";
-  container_img.style.maxHeight = window.innerHeight - caption_height - 20 + "px";
-
+  container.style.maxHeight = window.innerHeight - caption_height - 2*offset + "px";
+  if (container_img.offsetHeight > window.innerHeight - 2*offset) {
+    container.style.top = offset+"px";
+  }
 }
 
 function showLoadingCursor(elem) {
@@ -207,7 +250,6 @@ window.onkeydown = function(e) {
 
 function appendImage(image_url) {
   container.style.top = document.body.scrollTop+10+"px";
-  container_img.style.maxWidth = window.innerWidth+"px";
   container_img.style.maxHeight = window.innerHeight-20-caption_height+"px";
   container_img.src = image_url;
   waitForLoad(image_url);
@@ -217,7 +259,9 @@ function getUrlPath(elem) {
   var url;
   var match = ((matchSite.twitter(elem)
         || matchSite.livememe(elem)
-        || matchSite.imgur(elem.href || elem.parentNode.href)));
+        || matchSite.imgur(elem.href || elem.parentNode.href)
+        || matchSite.wikimedia(elem.src)
+        || matchSite.normal(elem.href || elem.parentNode.href)));
   if (img_match.test(match)) {
     currentElement = elem;
     elem.style.cursor = "wait";

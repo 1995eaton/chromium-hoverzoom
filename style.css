@@ -35,6 +35,7 @@
 }
 
 #hvzoom_img_container_image {
+  position: relative;
   margin: 0;
   padding: 2px;
   padding-bottom: 0;
