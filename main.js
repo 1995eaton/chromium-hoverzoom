@@ -64,8 +64,8 @@ var matchSite = {
 
   livememe: function(elem) {
     var r = /http(s)?:\/\/.*livememe\.com\/([a-zA-Z0-9]){7}/;
-    if (r.test(elem.src || elem.href)) {
-      return (elem.src || elem.href) + ".jpg";
+    if (r.test(elem.href || elem.parentNode.href)) {
+      return (elem.href || elem.parentNode.href) + ".jpg";
     }
   },
 
