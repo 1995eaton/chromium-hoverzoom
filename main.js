@@ -1,12 +1,24 @@
-var container, container_img, container_caption, container_album_index, hover_timeout, caption_height, x, y, timeout_length, currentElement;
-var img_match = new RegExp("\.(png|jpeg|jpg|gif)(\\?([^?])+$)?(:large)?$", "i");
+var imgur, container, container_img, container_caption, container_album_index, hover_timeout, caption_height, x, y, timeout_length, currentElement, fadeContainer, adjustImageSize, waitForLoad, matchSite, display, appendImage, getUrlPath, offset, orig_url, imageLoaded, basicMatch, stripUrl;
 var log = console.log.bind(console);
-var imageLoaded = false;
 
-timeout_length = 300;
+timeout_length = 100;
 fade_duration = 10;
+offset = 15;
 
-var imgur = {
+basicMatch = function(url) {
+  var match = new RegExp("\.(png|jpeg|jpg|svg|gif)(\\?([^?])+$)?(:large)?$", "i");
+  return match.test(url);
+};
+
+stripUrl = function(url) {
+  if (!url) return;
+  url = url.replace(/^http(s)?:\/\//, "");
+  url = "."+url.replace(/\/.*/, "");
+  url = url.replace(/.*\.(([^\.]+)\.([^\.]+)$)/, "$1");
+  return url;
+}
+
+imgur = {
 
   isAlbum: null,
   albumImages: [],
@@ -40,95 +52,120 @@ var imgur = {
 
 };
 
-function waitForLoad(url) {
-  var test_img = new Image();
-  test_img.src = url;
-  test_img.onload = function() {
-    setTimeout(function() {
+waitForLoad = function(url) {
+  var t = 0;
+  var timeout = setInterval(function() {
+    if (hover_timeout) clearInterval(timeout);
+    t++;
+    if (t >= timeout_length) {
       imageLoaded = true;
       if (hover_timeout == false) {
-        hover_timeout = true;
-        fadeContainer.In();
-        container.style.display = "block";
         adjustImageSize();
+        hover_timeout = true;
+        chrome.runtime.sendMessage({url: orig_url});
+        fadeContainer.In();
       }
-    }, timeout_length);
-  }
+    }
+  }, 1);
 }
 
-var matchSite = {
+matchSite = {
 
   twitter: function (elem) {
     return (/is-preview/.test(elem.parentNode.className))? elem.src : false;
   },
 
   livememe: function(elem) {
-    var r = /http(s)?:\/\/.*livememe\.com\/([a-zA-Z0-9]){7}/;
-    if (r.test(elem.href || elem.parentNode.href)) {
-      return (elem.href || elem.parentNode.href) + ".jpg";
-    }
+    var base = new RegExp("livememe\.com", "i");
+    if (!base.test(stripUrl(elem.href)) || !base.test(stripUrl(elem.parentNode.href))) return;
+    var match = /[a-zA-Z0-9]{7}/;
+    if (match.test(elem.href)) return elem.href + ".jpg";
+    if (match.test(elem.parentNode.href)) return elem.parentNode.href + ".jpg";
   },
 
   imgur: function(url) {
     imgur.isImgurAlbum = false;
-    var m = img_match.test(url);
-    if (!/http(s?):\/\/imgur.com/.test(url)) return;
-    if (/(http(s)?:\/\/|www\.)imgur\.com/.test(url)) {
-      if (/\/random/.test(url)) return;
-      if (!m && /\/a\//.test(url)) {
+    var base = new RegExp("imgur\.com", "i");
+    if (/\/random/.test(url) || !base.test(stripUrl(url))) return;
+    var suffix = url.replace(new RegExp(".*"+stripUrl(url)+"(\/)?"), "");
+    if (!basicMatch(url)) {
+      if (/\/a\//.test(url)) {
         return imgur.getAlbum(url.replace(/.*\/a\//, ""));
-    } else if (!m && /\/gallery\//.test(url)) {
-      if (/\/gallery\/(([a-zA-Z0-9]){7})/.test(url)) {
-        return url.replace('/gallery/', '/')+".jpg";
-      } else {
-        return imgur.getAlbum(url.replace(/.*gallery\//, ''));
+    } else if (/\/gallery\/(([a-zA-Z0-9]){7})/.test(url)) {
+      return url.replace('/gallery/', '/')+".jpg";
+    } else if (/\/gallery\//.test(url)) {
+      return imgur.getAlbum(url.replace(/.*gallery/, ""));
+    } else {
+      if (suffix.length == 7) {
+        return url + ".jpg";
       }
-    } else {
-      var updated_url = url.replace(/http.*\.com/, "");
-      if (updated_url == "/" || updated_url == null) return;
-      else return "https://i.imgur.com/"+updated_url+".jpg";
     }
-    } else {
-      return url+"jpg";
     }
+    return url;
   },
 
   wikimedia: function(url) {
-    var r = new RegExp("http(s)?:\/\/.*(upload\.wikimedia|wikipedia)\.org.*\.(png|svg|jpg|jpeg|gif)", "i");
-    if (r.test(url)) {
-      url = url.replace(/\/thumb/, "");
-      url = url.replace(/\/([^/]+)$/, "");
+    var base = new RegExp("(wikipedia|wikimedia)\.org", "i");
+    if (!base.test(url) || !basicMatch(url)) return;
+    url = url.replace(/\/thumb/, "");
+    url = url.replace(/\/([^/]+)$/, "");
+    return url;
+  },
+
+  deviantart: function(url) {
+    var base = new RegExp("deviantart\.(com|net)", "i");
+    if (/\/(avatars|emoticons)\//.test(url) || !base.test(stripUrl(url)) || !basicMatch(url)) return;
+    return (url.replace(/(\.(com|net)\/([^\/]+))\/([^\/]+)/g, "$1"));
+  },
+
+  facebook: function(elem) {
+    if (elem.className === "img" || !/facebook\.com/.test(document.URL)) return;
+    if (/ContentWrapper/.test(elem.className)) return;
+    function trimUrl(url) {
+      url = url.replace(/url\(/, "");
+      url = url.replace(/\)/, "");
+      url = url.replace(/(\/[a-z])?\/t([0-9]+)\/.*[0-9]x([0-9]+)\//, "/");
+      url = url.replace(/_[a-z](\.([a-zA-Z]+))$/, "_o$1");
       return url;
     }
+    if (elem.nodeName === "I" && elem.style.backgroundImage) {
+      return trimUrl(elem.style.backgroundImage);
+    }
+    var e = elem.firstChild;
+    if (e && e.firstChild && e.firstChild.src){
+      return !basicMatch(e.firstChild.src) || trimUrl(e.firstChild.src);
+    }
+    return !basicMatch(elem.src) || trimUrl(elem.src);
   },
 
   normal: function(url) {
-    if (img_match.test(url)) {
-      return url;
+    if (basicMatch(url)) {
+      return url.replace(/.*url=/, "");
     }
   }
 
 };
 
-var fadeContainer = {
-  In: function() {
-    container.style.opacity = "0";
-    var i = 0;
-    var fade = setInterval(function() {
-      i += 1/fade_duration;
-      container.style.opacity = i;
-      if (i >= 1) {
-        clearInterval(fade);
-      }
-    }, 15);
+
+display = {
+  show: function() {
   },
+  hide: function() {
+    if (container.style.display == "block") {
+      container.style.display = "none";
+      container_caption.style.display = "none";
+      container_album_index.style.display = "none";
+      container_caption.innerHTML = "";
+      container_album_index.innerHTML = "";
+    }
+  }
 };
 
-function adjustImageSize() {
+adjustImageSize = function() {
 
-  var offset = 15;
+  if (!container || fadeContainer.transition) return;
   if (container_caption.style.display != "none") {
-    caption_height = container_caption.clientHeight;
+    caption_height = container_caption.offsetHeight;
   } else {
     caption_height = 0;
   }
@@ -181,11 +218,50 @@ function adjustImageSize() {
   }
   container_img.style.maxHeight = window.innerHeight - caption_height - 2*offset - 4 + "px";
   container.style.height = container_img.offsetHeight + caption_height + 2 +  "px";
-  container.style.maxHeight = window.innerHeight - caption_height - 2*offset + "px";
+  container.style.maxHeight = window.innerHeight + caption_height - 2*offset + "px";
   if (container_img.offsetHeight > window.innerHeight - 2*offset) {
     container.style.top = offset+"px";
   }
 }
+
+fadeContainer = {
+
+  transition: null,
+
+  In: function() {
+    if (fadeContainer.transition) return;
+    container.style.display = "block";
+    container.style.opacity = "0";
+    var i = 0;
+    var fade = setInterval(function() {
+      i += 1/fade_duration;
+      container.style.opacity = i;
+      if (i >= 1) {
+        imageLoaded = true;
+        hover_timeout = true;
+        container.style.opacity = "1";
+        clearInterval(fade);
+      }
+    }, 15);
+  },
+
+  Out: function() {
+    if (fadeContainer.transition) return;
+    fadeContainer.transition = true;
+    var i = 1;
+    var fade = setInterval(function() {
+      i -= 1/fade_duration;
+      container.style.opacity = i;
+      if (i <= 0) {
+        container.style.opacity = "0";
+        fadeContainer.transition = false;
+        display.hide();
+        clearInterval(fade);
+      }
+    }, 15);
+  }
+
+};
 
 function showLoadingCursor(elem) {
   var loadLoop = setInterval(function() {
@@ -203,7 +279,7 @@ window.onkeydown = function(e) {
     var key = e.which;
     var album_length = imgur.albumImages.length;
     if (album_length > 1) {
-      if (key == 39) { //right arrow
+      if (key == 39) {
         if (currentElement) {
           imageLoaded = false;
           showLoadingCursor(currentElement);
@@ -223,7 +299,7 @@ window.onkeydown = function(e) {
           container_caption.innerHTML = "";
           container_caption.style.display = "none";
         }
-      } else if (key == 37) { //left arrow
+      } else if (key == 37) {
         if (currentElement) {
           imageLoaded = false;
           showLoadingCursor(currentElement);
@@ -248,23 +324,27 @@ window.onkeydown = function(e) {
   }
 }
 
-function appendImage(image_url) {
-  container.style.top = document.body.scrollTop+10+"px";
-  container_img.style.maxHeight = window.innerHeight-20-caption_height+"px";
+appendImage = function(image_url) {
+  if (!container) return;
+  container.style.top = document.body.scrollTop + offset + "px";
+  container_img.style.maxHeight = window.innerHeight - offset + "px";
   container_img.src = image_url;
   waitForLoad(image_url);
 }
 
-function getUrlPath(elem) {
-  var url;
+getUrlPath = function(elem) {
+  var url = elem.href || elem.parentNode.href || elem.src;
+  if (/hvzoom/.test(elem.id)) return;
   var match = ((matchSite.twitter(elem)
         || matchSite.livememe(elem)
         || matchSite.imgur(elem.href || elem.parentNode.href)
         || matchSite.wikimedia(elem.src)
-        || matchSite.normal(elem.href || elem.parentNode.href)));
-  if (img_match.test(match)) {
+        || matchSite.facebook(elem)
+        || matchSite.deviantart(elem.src)
+        || matchSite.normal(elem.href || elem.parentNode.href || elem.parentNode.parentNode.href)));
+  if (basicMatch(match)) {
+    orig_url = url;
     currentElement = elem;
-    elem.style.cursor = "wait";
     imageLoaded = false;
     showLoadingCursor(elem);
     return appendImage(match);
@@ -274,32 +354,25 @@ function getUrlPath(elem) {
 }
 
 window.onmousemove = function(e) {
-
-  x = e.x;
-  y = e.y;
-
-  if (container && container.style.display === "block") {
-    adjustImageSize();
+  x = e.x; y = e.y;
+  if (container && container.style.display === "block" && e.target != currentElement) {
+    fadeContainer.Out();
   }
+};
 
-}
+window.onmousewheel = function(e) {
+  if (container.style.display == "block" && e.target != currentElement) {
+    fadeContainer.Out();
+  }
+};
 
 window.onmouseover = function(e) {
-  if (/(IMG|A)/.test(e.target.nodeName)) {
-
+  if (/(^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName))) {
     hover_timeout = false;
     getUrlPath(e.target);
-
   } else {
-
     hover_timeout = true;
     currentElement = null;
-    if (container) {
-      container.style.display = "none";
-      container_caption.style.display = "none";
-      container_album_index.style.display = "none";
-    }
-
   }
 };
 
@@ -325,11 +398,9 @@ function setupElements() {
 
 window.onload = function() {
   setupElements();
-
   setInterval(function() {
     if (container && container.style.display === "block") {
       adjustImageSize();
     }
-  }, 50);
-
+  }, 5);
 }
