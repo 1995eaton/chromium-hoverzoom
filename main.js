@@ -1,4 +1,4 @@
-var imgur, container, container_img, container_caption, container_album_index, hover_timeout, caption_height, x, y, timeout_length, currentElement, fadeContainer, adjustImageSize, waitForLoad, matchSite, display, appendImage, getUrlPath, offset, orig_url, imageLoaded, basicMatch, stripUrl;
+var imgur, container, container_img, container_caption, container_album_index, hover_timeout, caption_height, x, y, timeout_length, currentElement, fadeContainer, adjustImageSize, waitForLoad, matchSite, appendImage, getUrlPath, offset, orig_url, imageLoaded, basicMatch, stripUrl, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor;
 var log = console.log.bind(console);
 
 timeout_length = 100;
@@ -146,29 +146,10 @@ matchSite = {
 
 };
 
-
-display = {
-  show: function() {
-  },
-  hide: function() {
-    if (container.style.display == "block") {
-      container.style.display = "none";
-      container_caption.style.display = "none";
-      container_album_index.style.display = "none";
-      container_caption.innerHTML = "";
-      container_album_index.innerHTML = "";
-    }
-  }
-};
-
 adjustImageSize = function() {
 
-  if (!container || fadeContainer.transition) return;
-  if (container_caption.style.display != "none") {
-    caption_height = container_caption.offsetHeight;
-  } else {
-    caption_height = 0;
-  }
+  if (fadeContainer.transition) return;
+  caption_height = container_caption.offsetHeight;
 
   if (x < window.innerWidth/2) {
     if (container_img.offsetWidth < window.innerWidth) {
@@ -232,14 +213,17 @@ fadeContainer = {
     if (fadeContainer.transition) return;
     container.style.display = "block";
     container.style.opacity = "0";
+    adjustImageSize();
     var i = 0;
     var fade = setInterval(function() {
+      adjustImageSize();
       i += 1/fade_duration;
       container.style.opacity = i;
       if (i >= 1) {
         imageLoaded = true;
         hover_timeout = true;
         container.style.opacity = "1";
+        adjustImageSize();
         clearInterval(fade);
       }
     }, 15);
@@ -255,7 +239,11 @@ fadeContainer = {
       if (i <= 0) {
         container.style.opacity = "0";
         fadeContainer.transition = false;
-        display.hide();
+        container.style.display = "none";
+        container_caption.style.display = "none";
+        container_album_index.style.display = "none";
+        container_caption.innerHTML = "";
+        container_album_index.innerHTML = "";
         clearInterval(fade);
       }
     }, 15);
@@ -263,7 +251,7 @@ fadeContainer = {
 
 };
 
-function showLoadingCursor(elem) {
+showLoadingCursor = function(elem) {
   var loadLoop = setInterval(function() {
     elem.style.cursor = "wait";
     if (imageLoaded) {
@@ -272,56 +260,6 @@ function showLoadingCursor(elem) {
       return false;
     }
   }, 50);
-}
-
-window.onkeydown = function(e) {
-  if (imgur.isImgurAlbum) {
-    var key = e.which;
-    var album_length = imgur.albumImages.length;
-    if (album_length > 1) {
-      if (key == 39) {
-        if (currentElement) {
-          imageLoaded = false;
-          showLoadingCursor(currentElement);
-        }
-        if (imgur.currentIndex + 1 < album_length) {
-          imgur.currentIndex++;
-        } else {
-          imgur.currentIndex = 0;
-        }
-        waitForLoad(imgur.albumImages[imgur.currentIndex].innerHTML);
-        container_album_index.innerText = imgur.currentIndex+1+"/"+imgur.albumImages.length;
-        container_img.src = imgur.albumImages[imgur.currentIndex].innerHTML;
-        if (imgur.albumCaptions[imgur.currentIndex].innerHTML != "") {
-          container_caption.innerText = imgur.albumCaptions[imgur.currentIndex].innerHTML;
-          container_caption.style.display = "block";
-        } else {
-          container_caption.innerHTML = "";
-          container_caption.style.display = "none";
-        }
-      } else if (key == 37) {
-        if (currentElement) {
-          imageLoaded = false;
-          showLoadingCursor(currentElement);
-        }
-        if (imgur.currentIndex - 1 < 0) {
-          imgur.currentIndex = album_length - 1;
-        } else {
-          imgur.currentIndex--;
-        }
-        waitForLoad(imgur.albumImages[imgur.currentIndex].innerHTML);
-        container_album_index.innerText = imgur.currentIndex+1+"/"+imgur.albumImages.length;
-        container_img.src = imgur.albumImages[imgur.currentIndex].innerHTML;
-        if (imgur.albumCaptions[imgur.currentIndex].innerHTML != "") {
-          container_caption.innerText = imgur.albumCaptions[imgur.currentIndex].innerHTML;
-          container_caption.style.display = "block";
-        } else {
-          container_caption.innerHTML = "";
-          container_caption.style.display = "none";
-        }
-      }
-    }
-  }
 }
 
 appendImage = function(image_url) {
@@ -353,20 +291,49 @@ getUrlPath = function(elem) {
   }
 }
 
-window.onmousemove = function(e) {
+onKeyDown = function(e) {
+  if (imgur.isImgurAlbum) {
+    var key = e.which;
+    var album_length = imgur.albumImages.length;
+    if (album_length > 1) {
+      if (key == 39) {
+        imgur.currentIndex = (imgur.currentIndex + 1 < album_length)? imgur.currentIndex + 1 : 0;
+      } else if (key == 37) {
+        imgur.currentIndex = (imgur.currentIndex - 1 < 0)? album_length - 1 : imgur.currentIndex - 1;
+      }
+      if (key == 37 || key == 39) {
+        container_album_index.innerText = imgur.currentIndex+1+"/"+imgur.albumImages.length;
+        container_img.src = imgur.albumImages[imgur.currentIndex].innerHTML;
+        if (imgur.albumCaptions[imgur.currentIndex].innerHTML != "") {
+          container_caption.innerText = imgur.albumCaptions[imgur.currentIndex].innerHTML;
+          container_caption.style.display = "block";
+        } else {
+          container_caption.innerHTML = "";
+          container_caption.style.display = "none";
+        }
+        adjustImageSize();
+      }
+    }
+  }
+}
+
+onMouseMove = function(e) {
   x = e.x; y = e.y;
-  if (container && container.style.display === "block" && e.target != currentElement) {
-    fadeContainer.Out();
+  if (container.style.display === "block") {
+    adjustImageSize();
+    if (e.target != currentElement) {
+      fadeContainer.Out();
+    }
   }
 };
 
-window.onmousewheel = function(e) {
+onMouseWheel = function(e) {
   if (container.style.display == "block" && e.target != currentElement) {
     fadeContainer.Out();
   }
 };
 
-window.onmouseover = function(e) {
+onMouseOver = function(e) {
   if (/(^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName))) {
     hover_timeout = false;
     getUrlPath(e.target);
@@ -398,9 +365,8 @@ function setupElements() {
 
 window.onload = function() {
   setupElements();
-  setInterval(function() {
-    if (container && container.style.display === "block") {
-      adjustImageSize();
-    }
-  }, 5);
+  document.addEventListener("keydown", onKeyDown, false);
+  document.addEventListener("mousewheel", onMouseWheel, false);
+  document.addEventListener("mousemove", onMouseMove, false);
+  document.addEventListener("mouseover", onMouseOver, false);
 }
