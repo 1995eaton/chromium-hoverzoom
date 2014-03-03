@@ -6,8 +6,7 @@ fade_duration = 10;
 offset = 15;
 
 basicMatch = function(url) {
-  var match = new RegExp("\.(png|jpeg|jpg|svg|gif)(\\?([^?])+$)?(:large)?$", "i");
-  return match.test(url);
+  return (/\.(png|jpeg|jpg|svg|gif|tif)((\\?[^?])+$)?/i).test(url);
 };
 
 stripUrl = function(url) {
@@ -16,7 +15,7 @@ stripUrl = function(url) {
   url = "."+url.replace(/\/.*/, "");
   url = url.replace(/.*\.(([^\.]+)\.([^\.]+)$)/, "$1");
   return url;
-}
+};
 
 imgur = {
 
@@ -41,7 +40,7 @@ imgur = {
       container_album_index.innerText = "1/"+imgur.albumImages.length;
       container_album_index.style.display = "block";
     }
-    if (imgur.albumCaptions[0].innerHTML != "") {
+    if (imgur.albumCaptions[0].innerHTML !== "") {
       adjustImageSize();
       container_caption.innerText = imgur.albumCaptions[0].innerHTML;
       container_caption.style.display = "block";
@@ -59,7 +58,7 @@ waitForLoad = function(url) {
     t++;
     if (t >= timeout_length) {
       imageLoaded = true;
-      if (hover_timeout == false) {
+      if (hover_timeout === false) {
         adjustImageSize();
         hover_timeout = true;
         chrome.runtime.sendMessage({url: orig_url});
@@ -67,7 +66,7 @@ waitForLoad = function(url) {
       }
     }
   }, 1);
-}
+};
 
 matchSite = {
 
@@ -76,7 +75,7 @@ matchSite = {
   },
 
   livememe: function(elem) {
-    var base = new RegExp("livememe\.com", "i");
+    var base = /livememe\.com/i;
     if (!base.test(stripUrl(elem.href)) || !base.test(stripUrl(elem.parentNode.href))) return;
     var match = /[a-zA-Z0-9]{7}/;
     if (match.test(elem.href)) return elem.href + ".jpg";
@@ -84,36 +83,34 @@ matchSite = {
   },
 
   imgur: function(url) {
+    if (/\/random/.test(url) || !/imgur\.com/i.test(stripUrl(url))) return;
     imgur.isImgurAlbum = false;
-    var base = new RegExp("imgur\.com", "i");
-    if (/\/random/.test(url) || !base.test(stripUrl(url))) return;
-    var suffix = url.replace(new RegExp(".*"+stripUrl(url)+"(\/)?"), "");
     if (!basicMatch(url)) {
       if (/\/a\//.test(url)) {
         return imgur.getAlbum(url.replace(/.*\/a\//, ""));
-    } else if (/\/gallery\/(([a-zA-Z0-9]){7})/.test(url)) {
-      return url.replace('/gallery/', '/')+".jpg";
-    } else if (/\/gallery\//.test(url)) {
-      return imgur.getAlbum(url.replace(/.*gallery/, ""));
-    } else {
-      if (suffix.length == 7) {
-        return url + ".jpg";
+      } else if (/\/gallery\/(([a-zA-Z0-9]){7})/.test(url)) {
+        return url.replace('/gallery/', '/')+".jpg";
+      } else if (/\/gallery\//.test(url)) {
+        return imgur.getAlbum(url.replace(/.*gallery/, ""));
+      } else {
+        var suffix = url.replace(new RegExp(".*"+stripUrl(url)+"(\/)?", "i"), "");
+        if (suffix.length == 7) {
+          return url + ".jpg";
+        }
       }
-    }
     }
     return url;
   },
 
   wikimedia: function(url) {
-    var base = new RegExp("(wikipedia|wikimedia)\.org", "i");
-    if (!base.test(url) || !basicMatch(url)) return;
+    if (!/(wikipedia|wikimedia)\.org/i.test(url) || !basicMatch(url)) return;
     url = url.replace(/\/thumb/, "");
-    url = url.replace(/\/([^/]+)$/, "");
+    url = url.replace(/\/([^\/]+)$/, "");
     return url;
   },
 
   deviantart: function(url) {
-    var base = new RegExp("deviantart\.(com|net)", "i");
+    var base = /deviantart\.(com|net)/i;
     if (/\/(avatars|emoticons)\//.test(url) || !base.test(stripUrl(url)) || !basicMatch(url)) return;
     return (url.replace(/(\.(com|net)\/([^\/]+))\/([^\/]+)/g, "$1"));
   },
@@ -178,9 +175,9 @@ adjustImageSize = function() {
       container.style.top = document.body.scrollTop + offset + "px";
     } else {
       if (y + 2*offset + container.offsetHeight > window.innerHeight) {
-        container.style.top = document.body.scrollTop+ y - (container.offsetHeight-(window.innerHeight-y)) - offset + "px";;
+        container.style.top = document.body.scrollTop+ y - (container.offsetHeight-(window.innerHeight-y)) - offset + "px";
       } else {
-        container.style.top = document.body.scrollTop + offset + y + "px";;
+        container.style.top = document.body.scrollTop + offset + y + "px";
       }
     }
   } else if (y + container.offsetHeight > window.innerHeight/2 - 2*offset) {
@@ -203,7 +200,7 @@ adjustImageSize = function() {
   if (container_img.offsetHeight > window.innerHeight - 2*offset) {
     container.style.top = offset+"px";
   }
-}
+};
 
 fadeContainer = {
 
@@ -260,7 +257,7 @@ showLoadingCursor = function(elem) {
       return false;
     }
   }, 50);
-}
+};
 
 appendImage = function(image_url) {
   if (!container) return;
@@ -268,18 +265,18 @@ appendImage = function(image_url) {
   container_img.style.maxHeight = window.innerHeight - offset + "px";
   container_img.src = image_url;
   waitForLoad(image_url);
-}
+};
 
 getUrlPath = function(elem) {
   var url = elem.href || elem.parentNode.href || elem.src;
   if (/hvzoom/.test(elem.id)) return;
-  var match = ((matchSite.twitter(elem)
-        || matchSite.livememe(elem)
-        || matchSite.imgur(elem.href || elem.parentNode.href)
-        || matchSite.wikimedia(elem.src)
-        || matchSite.facebook(elem)
-        || matchSite.deviantart(elem.src)
-        || matchSite.normal(elem.href || elem.parentNode.href || elem.parentNode.parentNode.href)));
+  var match = ((matchSite.twitter(elem) ||
+                matchSite.livememe(elem) ||
+                matchSite.imgur(elem.href || elem.parentNode.href) ||
+                matchSite.wikimedia(elem.src) ||
+                matchSite.facebook(elem) ||
+                matchSite.deviantart(elem.src) ||
+                matchSite.normal(elem.href || elem.parentNode.href || elem.parentNode.parentNode.href)));
   if (basicMatch(match)) {
     orig_url = url;
     currentElement = elem;
@@ -289,22 +286,20 @@ getUrlPath = function(elem) {
   } else {
     hover_timeout = false;
   }
-}
+};
 
 onKeyDown = function(e) {
   if (imgur.isImgurAlbum) {
-    var key = e.which;
-    var album_length = imgur.albumImages.length;
-    if (album_length > 1) {
-      if (key == 39) {
-        imgur.currentIndex = (imgur.currentIndex + 1 < album_length)? imgur.currentIndex + 1 : 0;
-      } else if (key == 37) {
-        imgur.currentIndex = (imgur.currentIndex - 1 < 0)? album_length - 1 : imgur.currentIndex - 1;
+    if (imgur.albumImages.length > 1) {
+      if (e.which == 39) {
+        imgur.currentIndex = (imgur.currentIndex + 1 < imgur.albumImages.lengthgth)? imgur.currentIndex + 1 : 0;
+      } else if (e.which == 37) {
+        imgur.currentIndex = (imgur.currentIndex - 1 < 0)? imgur.albumImages.lengthgth - 1 : imgur.currentIndex - 1;
       }
-      if (key == 37 || key == 39) {
+      if (e.which == 37 || e.which == 39) {
         container_album_index.innerText = imgur.currentIndex+1+"/"+imgur.albumImages.length;
         container_img.src = imgur.albumImages[imgur.currentIndex].innerHTML;
-        if (imgur.albumCaptions[imgur.currentIndex].innerHTML != "") {
+        if (imgur.albumCaptions[imgur.currentIndex].innerHTML !== "") {
           container_caption.innerText = imgur.albumCaptions[imgur.currentIndex].innerHTML;
           container_caption.style.display = "block";
         } else {
@@ -315,7 +310,7 @@ onKeyDown = function(e) {
       }
     }
   }
-}
+};
 
 onMouseMove = function(e) {
   x = e.x; y = e.y;
@@ -369,4 +364,4 @@ window.onload = function() {
   document.addEventListener("mousewheel", onMouseWheel, false);
   document.addEventListener("mousemove", onMouseMove, false);
   document.addEventListener("mouseover", onMouseOver, false);
-}
+};
