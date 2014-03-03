@@ -13,17 +13,17 @@
   ],
   "background": {
     "scripts": [
-      "add_history.js"
+      "background_scripts/history.js"
     ]
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": [
-             "main.js"
+             "content_scripts/main.js"
             ],
       "css": [
-              "style.css"
+              "content_scripts/main.css"
              ],
       "run_at": "document_start",
       "all_frames": true
