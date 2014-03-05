@@ -25,14 +25,11 @@ var imgurAlbum = {
     imgurAlbum.isAlbum = true;
     imgurAlbum.index = 0;
     if (imgurAlbum.images.length > 1) {
-      adjustImageSize();
       container_album_index.innerText = "1/" + imgurAlbum.images.length;
       container_album_index.style.display = "block";
     }
     if (imgurAlbum.captions[0].innerHTML !== "") {
-      adjustImageSize();
       container_caption.innerText = imgurAlbum.captions[0].innerHTML;
-      container_caption.style.display = "block";
     }
     return imgurAlbum.images[0].innerHTML;
   }
@@ -144,9 +141,11 @@ Sites.imgur = function (elem, callback) {
 
 Sites.wikimedia = function (elem, callback) {
   var url = elem.src;
-  if (/(wikipedia|wikimedia)\.org/i.test(stripUrl(url)) && basicMatch(url)) {
+  if (/(wikipedia|wikimedia)\.org/i.test(stripUrl(url)) && !/\.ogv|\.ogg/.test(url) && basicMatch(url)) {
     url = url.replace(/\/thumb/, "");
-    url = url.replace(/\/([^\/]+)$/, "");
+    if (/.*\.(png|jpg|jpeg|gif|svg|tif).*\.(png|jpg|jpeg|gif|svg|tif)/i.test(url)) {
+      url = url.replace(/\/([^\/]+)$/, "");
+    }
     callback(url);
   }
 };
@@ -195,15 +194,17 @@ Sites.googleUserContent = function (elem, callback) {
     return;
   }
   function trimUrl(url) {
-    return url.replace(/\/[a-z][0-9]([^\/]+)(\/([^\/]+)\.(jpg|svg|jpeg|png|gif|tif)$)/i, "$2");
+    return url.replace(/\/[a-z][0-9]([^\/]+)(\/([^\/]+)\.(jpg|svg|jpeg|png|gif|tif)$)/i, "/s0$2");
   }
   var img = new Image();
   img.onload = function () {
     if (img.width > elem.width) {
       callback(img.src);
     }
+    elem.style.cursor = "";
   };
   img.src = trimUrl(elem.src);
+  elem.style.cursor = "wait";
 };
 
 Sites.google = function (elem, callback) {
@@ -219,13 +220,27 @@ Sites.google = function (elem, callback) {
 };
 
 Sites.normal = function (elem, callback) {
-  if (!elem.parentNode.href && !elem.href) {
-    return;
+  var imageFound;
+  var url;
+  var urlArray = [];
+  if (elem.href && basicMatch(elem.href)) {
+    urlArray.push(elem.href);
   }
-  if (basicMatch(elem.href)) {
-    callback(elem.href.replace(/.*url=/, ""));
-  } else if (basicMatch(elem.parentNode.href)) {
-    callback(elem.parentNode.href.replace(/.*url=/, ""));
+  if (elem.parentNode && basicMatch(elem.parentNode.href)) {
+    urlArray.push(elem.parentNode.href);
+  }
+  if (urlArray.length === 0) {
+    return false;
+  }
+  for (var i = 0; i < urlArray.length; i++) {
+    if (imageFound) {
+      return;
+    }
+    url = urlArray[i];
+    if (basicMatch(url)) {
+      log(url);
+      callback(url.replace(/.*url=/, ""));
+    }
   }
 };
 
@@ -244,14 +259,14 @@ Sites.gfycat = function (elem, callback) {
     var x = new XMLHttpRequest();
     x.open("GET", url);
     x.onload = function () {
-      log(x.responseText.match(/poster=('|")([^('|")]+)('|")/i)[0].replace(/^.*=('|")/, "").replace(/('|")$/, ""));
-      callback(x.responseText.match(/source id=('|")webmsource('|") src=('|")([^('|")]+)('|")/i)[0].replace(/^.*src=('|")/, "").replace(/('|")$/, ""));
+      callback(x.responseText.match(/source id=('|")webmsource('|") src=('|")([^('|")]+)('|")/i)[0].replace(/^.*src=('|")/, "").replace(/('|")$/, ""),
+      x.responseText.match(/poster=('|")([^('|")]+)('|")/i)[0].replace(/^.*=('|")/, "").replace(/('|")$/, ""));
     };
     x.send();
   }
   for (var i = 0; i < urlArray.length; i++) {
     url = urlArray[i];
-    if (!/gfycat\.com/.test(stripUrl(url))) {
+    if (/\.gif$/.test(url) || !/gfycat\.com/.test(stripUrl(url))) {
       continue;
     }
     isVideo = true;

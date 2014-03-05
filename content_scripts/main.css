@@ -13,7 +13,6 @@
   text-align: center;
   background-color: rgba(0, 0, 0, 0.75);
   color: #fff;
-  width: 100%;
   word-wrap: break-word;
   border-radius: 8px;
   bottom: 0;
@@ -35,7 +34,7 @@
 }
 
 #hvzoom_img_container_image {
-  position: relative;
+  position: absolute;
   margin: 0;
   padding: 2px;
   box-shadow: 0px 0px 8px #000;
@@ -43,8 +42,8 @@
 }
 
 #hvzoom_img_container_video {
-  position: relative;
-  margin: 0;
+  position: absolute;
   padding: 2px;
   box-shadow: 0px 0px 8px #000;
+  display: none;
 }
