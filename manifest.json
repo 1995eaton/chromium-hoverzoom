@@ -9,7 +9,8 @@
   "author": "Jake Eaton",
   "permissions": [
     "<all_urls>",
-    "history"
+    "history",
+    "tabs"
   ],
   "background": {
     "scripts": [
@@ -20,7 +21,8 @@
     {
       "matches": ["<all_urls>"],
       "js": [
-             "content_scripts/main.js"
+             "content_scripts/main.js",
+             "content_scripts/sites.js"
             ],
       "css": [
               "content_scripts/main.css"

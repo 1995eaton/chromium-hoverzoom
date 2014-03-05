@@ -1,9 +1,8 @@
 #hvzoom_img_container_main {
   position: absolute;
   left: 0;
-  box-shadow: 0px 0px 8px #000;
   opacity: 0;
-  background-color: #fff;
+  transition: opacity 0.35s ease;
   border-radius: 8px;
   z-index: 9999;
   display: none;
@@ -12,11 +11,11 @@
 #hvzoom_img_container_caption {
   position: absolute;
   text-align: center;
-  background-color: #fff;
+  background-color: rgba(0, 0, 0, 0.75);
+  color: #fff;
   width: 100%;
-  border-bottom-right-radius: 8px;
   word-wrap: break-word;
-  border-bottom-left-radius: 8px;
+  border-radius: 8px;
   bottom: 0;
   box-sizing: border-box;
   padding: 3px;
@@ -25,13 +24,13 @@
 
 #hvzoom_img_album_index {
   position: absolute;
-  top: 2px;
-  left: 2px;
+  top: 1px;
+  left: 1px;
   box-sizing: border-box;
+  background-color: rgba(0, 0, 0, 0.65);
+  color: #fff;
   padding: 2px;
-  border-top-left-radius: 4px;
-  background-color: #fff;
-  border-bottom-right-radius: 3px;
+  border-radius: 4px;
   display: none;
 }
 
@@ -39,6 +38,13 @@
   position: relative;
   margin: 0;
   padding: 2px;
-  padding-bottom: 0;
+  box-shadow: 0px 0px 8px #000;
   border-radius: 8px;
+}
+
+#hvzoom_img_container_video {
+  position: relative;
+  margin: 0;
+  padding: 2px;
+  box-shadow: 0px 0px 8px #000;
 }
