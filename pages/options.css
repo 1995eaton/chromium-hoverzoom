@@ -35,16 +35,23 @@ body {
   bottom: 0;
 }
 
+#reset_button {
+  position: absolute;
+  bottom: 0;
+  left: 50px;
+}
+
 td {
   padding: 5px;
   height: 30px;
+  line-height: 30px;
 }
 
 tr:nth-child(odd) {
   background-color:#eee;
 }
 
-tr:nth-child(even){ 
+tr:nth-child(even){
   background-color:#fff;
 }
 
@@ -67,18 +74,28 @@ table {
   float: right;
 }
 
-#fadeDuration {
+#cssVal {
+  width: 50%;
+  height: 200px;
+  resize: none;
+  float: right;
 }
 
 input {
+  width: 50px;
+}
+
+textarea, input {
   opacity: 0.8;
+  color: #444;
   transition: opacity 2s;
 }
 
-input:hover {
+textarea:hover, input:hover {
   opacity: 1;
 }
 
-input:focus {
+textarea:focus, input:focus {
+  color: #000;
   outline-style: none;
 }

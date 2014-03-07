@@ -1,10 +1,8 @@
-var container, container_img, container_caption, container_album_index, caption_height, x, y, timeout_length, currentElement, fadeContainer, fade_duration, adjustImageSize, appendImage, getUrlPath, offset, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor, adjustmentInterval, adjustImageMonitor, containerActive, hideContainer, setupElements, setUpImage, tryMatch, siteFunctions, isVideo, imageFound, imageHeight, imageWidth;
+var container, container_img, container_caption, container_album_index, caption_height, x, y, currentElement, fadeContainer, fade_duration, adjustImageSize, appendImage, getUrlPath, offset, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor, adjustmentInterval, adjustImageMonitor, containerActive, hideContainer, setupElements, setUpImage, tryMatch, siteFunctions, isVideo, imageFound, imageHeight, imageWidth, settings;
 //var isGoogleUrl = true;
 var log = console.log.bind(console);
 
 
-timeout_length = 100;
-offset = 15;
 adjustmentInterval = 100;
 
 getImagePosX = function () {
@@ -88,6 +86,9 @@ appendImage = function (imageUrl, disableTimeout) {
   ce.style.cursor = "wait";
   container.style.display = "block";
   container.style.transition = "";
+  container.style.top = document.body.scrollTop + offset + "px";
+  //container.style.transition = "width 0.2s ease-out, height 0.2s ease-out, left 0.2s ease-out, top 0.2s ease-out, opacity " + settings.fadeVal + "s ease-out";
+  container.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + settings.fadeVal + "s ease-out";
   var img = new Image();
   img.onload = function () {
     ce.style.cursor = "";
@@ -104,8 +105,6 @@ appendImage = function (imageUrl, disableTimeout) {
     }
     container_img.src = imageUrl;
     adjustImageSize();
-    container.style.top = document.body.scrollTop + offset + "px";
-    container.style.transition = "width 0.2s ease-out, height 0.2s ease-out, left 0.2s ease-out, top 0.2s ease-out, opacity 0.2s ease-out";
     imageHeight = img.height;
     imageWidth = img.width;
     container.style.display = "block";
@@ -128,7 +127,7 @@ adjustImageMonitor = function () {
     } else {
       adjustImageSize();
     }
-  }, adjustmentInterval);
+  }, 1000 / settings.updateIntervalVal);
 };
 
 hideContainer = function () {
@@ -289,7 +288,7 @@ onMouseOver = function (e) {
       if (ce === e.target) {
           getUrlPath(e.target);
       }
-    }, timeout_length);
+    }, parseFloat(settings.hoverVal) * 1000);
   }
 };
 
@@ -333,20 +332,24 @@ window.onload = function () {
   document.addEventListener("mousemove", onMouseMove, false);
   document.addEventListener("mouseover", onMouseOver, false);
   container.addEventListener("webkitTransitionEnd", transitionEnd, false);
-  adjustImageMonitor();
-  siteFunctions = [
-    Sites.imgur,
-    Sites.gfycat,
-    Sites.livememe,
-    Sites.twitter,
-    Sites.facebook,
-    Sites.googleUserContent,
-    Sites.google,
-    Sites.wikimedia,
-    Sites.xkcd,
-    Sites.github,
-    Sites.gravatar,
-    Sites.normal,
-    Sites.deviantart
-  ];
+  chrome.runtime.sendMessage({getSettings: true}, function (s) {
+    settings = s;
+    offset = parseInt(settings.offsetVal);
+    adjustImageMonitor();
+    siteFunctions = [
+      Sites.imgur,
+      Sites.gfycat,
+      Sites.livememe,
+      Sites.twitter,
+      Sites.facebook,
+      Sites.googleUserContent,
+      Sites.google,
+      Sites.wikimedia,
+      Sites.xkcd,
+      Sites.github,
+      Sites.gravatar,
+      Sites.normal,
+      Sites.deviantart
+    ];
+  });
 };
