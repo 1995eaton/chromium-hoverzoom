@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Image Zoom",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A simple alternative to Hover Zoom and Imagus",
   "icons": { "16": "icons/icon16.png",
              "48": "icons/icon48.png",
@@ -12,6 +12,7 @@
     "history",
     "tabs"
   ],
+  "options_page": "pages/options.html",
   "background": {
     "scripts": [
       "background_scripts/history.js"

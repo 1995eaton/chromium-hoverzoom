@@ -158,11 +158,7 @@ Sites.facebook = function (elem, callback) {
     if (!url) {
       return;
     }
-    url = url.replace(/url\(/, "");
-    url = url.replace(/\)/, "");
-    url = url.replace(/(\/[a-z])?\/t([0-9]+)\/.*[0-9]x([0-9]+)\//, "/");
-    url = url.replace(/_[a-z](\.([a-zA-Z]+))$/, "_o$1");
-    return url;
+    return url.replace(/url\(/, "").replace(/\)/, "").replace(/(\/[a-z])?\/t([0-9]+)\/.*[0-9]x([0-9]+)\//, "/").replace(/_[a-z](\.([a-zA-Z]+))$/, "_o$1");
   }
   if (/ImageContainer/.test(elem.className) && elem.firstChild && elem.firstChild.src) {
     callback(trimUrl(elem.firstChild.src));

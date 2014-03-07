@@ -3,9 +3,9 @@ var container, container_img, container_caption, container_album_index, caption_
 var log = console.log.bind(console);
 
 
-timeout_length = 300;
+timeout_length = 100;
 offset = 15;
-adjustmentInterval = 250;
+adjustmentInterval = 100;
 
 getImagePosX = function () {
   if (container.offsetWidth - 2 * offset >= window.innerWidth) {
@@ -65,40 +65,31 @@ getImagePosY = function () {
 
 adjustImageSize = function () {
 
-  caption_height = container_caption.offsetHeight;
-  if (container.style.display === "none" || fadeContainer.fadingOut) {
-    return;
-  }
   if (imageWidth > window.innerWidth - 2 * offset || imageHeight > window.innerHeight - 2 * offset) {
     if (imageWidth / window.innerWidth > imageHeight / window.innerHeight) {
       container.style.width = window.innerWidth - 3 * offset + "px";
       container.style.height = (window.innerWidth - 2 * offset) / imageWidth * imageHeight + "px";
-      container.style.top = getImagePosY();
-      container.style.left = getImagePosX();
     } else {
       container.style.height = window.innerHeight - 2 * offset + "px";
       container.style.width = (window.innerHeight - 2 * offset) / imageHeight * imageWidth + "px";
-      container.style.top = getImagePosY();
-      container.style.left = getImagePosX();
     }
   } else {
     container.style.width = imageWidth + "px";
     container.style.height = imageHeight + "px";
-    container.style.left = getImagePosX();
-    container.style.top = getImagePosY();
   }
+
+  container.style.left = getImagePosX();
+  container.style.top = getImagePosY();
+
 };
 
 appendImage = function (imageUrl, disableTimeout) {
-  var t, timeout;
-  t = 0;
   var ce = currentElement;
   ce.style.cursor = "wait";
   container.style.display = "block";
+  container.style.transition = "";
   var img = new Image();
   img.onload = function () {
-    container_img.style.display = "block";
-    container_vid.style.display = "none";
     ce.style.cursor = "";
     if (imgurAlbum.isAlbum) {
       if (container_caption.innerHTML != "") {
@@ -112,9 +103,14 @@ appendImage = function (imageUrl, disableTimeout) {
       container_album_index.style.display = "none";
     }
     container_img.src = imageUrl;
+    adjustImageSize();
+    container.style.top = document.body.scrollTop + offset + "px";
+    container.style.transition = "width 0.2s ease-out, height 0.2s ease-out, left 0.2s ease-out, top 0.2s ease-out, opacity 0.2s ease-out";
     imageHeight = img.height;
     imageWidth = img.width;
     container.style.display = "block";
+    container_img.style.display = "block";
+    container_vid.style.display = "none";
     fadeContainer.In();
     if (currentElement.nodeName === "IMG") {
       chrome.runtime.sendMessage({ url: currentElement.parentNode.href });
@@ -127,12 +123,17 @@ appendImage = function (imageUrl, disableTimeout) {
 
 adjustImageMonitor = function () {
   var interval = setInterval(function () {
-    adjustImageSize();
+    if (container.style.display === "none" || container.style.opacity === "0") {
+      hideContainer();
+    } else {
+      adjustImageSize();
+    }
   }, adjustmentInterval);
 };
 
 hideContainer = function () {
   container.style.display = "none";
+  container_img.style.display = "none";
   container_vid.style.display = "none";
 };
 
@@ -225,7 +226,6 @@ tryMatch = function (func, elem) {
 };
 
 getUrlPath = function (elem) {
-  if (/hvzoom/.test(elem.id)) return;
   Sites.foundMatch = false;
   for (var i = 0; i < siteFunctions.length; i++) {
     if (Sites.foundMatch) {
@@ -280,6 +280,7 @@ onMouseMove = function (e) {
 onMouseWheel = function (e) {
   fadeContainer.Out();
 };
+
 var ce;
 onMouseOver = function (e) {
   if ((/(DIV|^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName)))) {
