@@ -236,7 +236,6 @@ Sites.normal = function (elem, callback) {
     }
     url = urlArray[i];
     if (basicMatch(url)) {
-      log(url);
       callback(url.replace(/.*url=/, ""));
     }
   }
