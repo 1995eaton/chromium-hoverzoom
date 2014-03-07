@@ -1,12 +1,67 @@
-var container, container_img, container_caption, container_album_index, hover_timeout, caption_height, x, y, timeout_length, currentElement, fadeContainer, fade_duration, adjustImageSize, appendImage, getUrlPath, offset, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor, adjustmentInterval, adjustImageMonitor, containerActive, hideContainer, setupElements, setUpImage, tryMatch, siteFunctions, isVideo, adjustVideoSize;
+var container, container_img, container_caption, container_album_index, caption_height, x, y, timeout_length, currentElement, fadeContainer, fade_duration, adjustImageSize, appendImage, getUrlPath, offset, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor, adjustmentInterval, adjustImageMonitor, containerActive, hideContainer, setupElements, setUpImage, tryMatch, siteFunctions, isVideo, imageFound, imageHeight, imageWidth;
 //var isGoogleUrl = true;
 var log = console.log.bind(console);
 
 
-timeout_length = 75;
-fade_duration = 5;
+timeout_length = 300;
 offset = 15;
-adjustmentInterval = 5;
+adjustmentInterval = 250;
+
+getImagePosX = function () {
+  if (container.offsetWidth - 2 * offset >= window.innerWidth) {
+    if (x > window.innerWidth / 2) {
+      return document.body.scrollLeft + offset + "px";
+    } else {
+      return document.body.scrollLeft + window.innerWidth - 2 * offset - container.offsetWidth + "px";
+    }
+  } else {
+    if (x > window.innerWidth / 2) {
+      if (container.offsetWidth > x - 2 * offset) {
+        return document.body.scrollLeft + offset + "px";
+      } else {
+        return document.body.scrollLeft + x - container.offsetWidth - offset + "px";
+      }
+    } else {
+      if (container.offsetWidth > window.innerWidth - x - 3 * offset) {
+        return document.body.scrollLeft + window.innerWidth - container.offsetWidth - 2 * offset + "px";
+      } else {
+        return document.body.scrollLeft + x + offset + "px";
+      }
+    }
+  }
+};
+
+getImagePosY = function () {
+  if (container.offsetHeight - 2 * offset >= window.innerHeight) {
+    if (y > window.innerHeight / 2) {
+      return document.body.scrollTop + window.innerHeight - offset - container.offsetHeight + "px";
+    } else {
+      return document.body.scrollTop + offset + "px";
+    }
+  } else {
+    if (y > window.innerHeight / 2) {
+      if (container.offsetHeight / 2 > window.innerHeight - y - 2 * offset) {
+        if (container.offsetHeight + window.innerHeight - y + 2 * offset > window.innerHeight) {
+          return document.body.scrollTop + offset + "px";
+        } else {
+          return document.body.scrollTop + y - container.offsetHeight - offset + "px";
+        }
+      } else {
+        return document.body.scrollTop + y - offset - container.offsetHeight / 2 + "px";
+      }
+    } else {
+      if (container.offsetHeight / 2 > y - 2 * offset) {
+        if (container.offsetHeight + y + 2 * offset > window.innerHeight) {
+          return document.body.scrollTop + window.innerHeight - container.offsetHeight - offset + "px";
+        } else {
+          return document.body.scrollTop + y + offset + "px";
+        }
+      } else {
+        return document.body.scrollTop + y - offset - container.offsetHeight / 2 + "px";
+      }
+    }
+  }
+};
 
 adjustImageSize = function () {
 
@@ -14,141 +69,81 @@ adjustImageSize = function () {
   if (container.style.display === "none" || fadeContainer.fadingOut) {
     return;
   }
-
-  if (x < window.innerWidth / 2) {
-    if (container_img.offsetWidth < window.innerWidth) {
-      container.style.left = offset + x +  "px";
-      container.style.maxWidth = window.innerWidth - x - 3 * offset + "px";
-      container_img.style.maxWidth = window.innerWidth - x - 3 * offset - 4 + "px";
+  if (imageWidth > window.innerWidth - 2 * offset || imageHeight > window.innerHeight - 2 * offset) {
+    if (imageWidth / window.innerWidth > imageHeight / window.innerHeight) {
+      container.style.width = window.innerWidth - 3 * offset + "px";
+      container.style.height = (window.innerWidth - 2 * offset) / imageWidth * imageHeight + "px";
+      container.style.top = getImagePosY();
+      container.style.left = getImagePosX();
     } else {
-      container.style.left = offset + "px";
-      container.style.maxWidth = window.innerWidth - 3 * offset + "px";
-      container_img.style.maxWidth = window.innerWidth - 3 * offset - 4 + "px";
+      container.style.height = window.innerHeight - 2 * offset + "px";
+      container.style.width = (window.innerHeight - 2 * offset) / imageHeight * imageWidth + "px";
+      container.style.top = getImagePosY();
+      container.style.left = getImagePosX();
     }
   } else {
-    if (container_img.offsetWidth < window.innerWidth) {
-      container.style.left = x - offset - container_img.offsetWidth +  "px";
-      container.style.maxWidth = x - 3 * offset + "px";
-      container_img.style.maxWidth = x - 3 * offset - 4 + "px";
-    } else {
-      container.style.left = offset + "px";
-      container.style.maxWidth = window.innerWidth - 3 * offset + "px";
-      container_img.style.maxWidth = window.innerWidth - 3 * offset - 4 + "px";
-    }
-  }
-
-  if (y - container.offsetHeight < offset * 2) {
-    if (y > window.innerHeight / 2) {
-      container.style.top = document.body.scrollTop + offset + "px";
-    } else {
-      if (y + 2 * offset + container.offsetHeight > window.innerHeight) {
-        container.style.top = document.body.scrollTop + y - (container.offsetHeight - (window.innerHeight - y)) - offset + "px";
-      } else {
-        container.style.top = document.body.scrollTop + offset + y + "px";
-      }
-    }
-  } else if (y + container.offsetHeight > window.innerHeight / 2 - 2 * offset) {
-    container.style.top = document.body.scrollTop + y - container.offsetHeight - offset + "px";
-  } else {
-    container.style.top = document.body.scrollTop + y + offset + "px";
-  }
-  if (container_img.offsetWidth > container_img.offsetHeight) {
-    if (y < window.innerHeight / 2) {
-      container.style.height = container_img.offsetHeight + caption_height + 2 +  "px";
-      container_img.style.maxHeight = window.innerHeight - y - caption_height - 2 * offset + "px";
-    } else {
-      container.style.height = container_img.offsetHeight + caption_height + 2 +  "px";
-      container_img.style.maxHeight = y - caption_height - 2 * offset + "px";
-    }
-  }
-  container_img.style.maxHeight = window.innerHeight - caption_height - 2 * offset - 4 + "px";
-  if (container_img.offsetHeight > window.innerHeight - 2 * offset) {
-    container.style.top = offset + "px";
+    container.style.width = imageWidth + "px";
+    container.style.height = imageHeight + "px";
+    container.style.left = getImagePosX();
+    container.style.top = getImagePosY();
   }
 };
 
-adjustVideoSize = function () {
-
-  if (fadeContainer.fadingOut) {
-    return;
-  }
-
-  if (x < window.innerWidth / 2) {
-    if (container_vid.offsetWidth < window.innerWidth) {
-      container.style.left = offset + x + "px";
-      container.style.maxWidth = window.innerWidth - x - 3 * offset + "px";
-      container_vid.style.maxWidth = window.innerWidth - x - 3 * offset - 4 + "px";
-    } else {
-      container.style.left = offset + "px";
-      container.style.maxWidth = window.innerWidth - 3 * offset + "px";
-      container_vid.style.maxWidth = window.innerWidth - 3 * offset - 4 + "px";
-    }
-  } else {
-    if (container_vid.offsetWidth < window.innerWidth) {
-      container.style.left = x - offset - container_vid.offsetWidth +  "px";
-      container.style.maxWidth = x - 3 * offset + "px";
-      container_vid.style.maxWidth = x - 3 * offset - 4 + "px";
-    } else {
-      container.style.left = offset + "px";
-      container.style.maxWidth = window.innerWidth - 3 * offset + "px";
-      container_vid.style.maxWidth = window.innerWidth - 3 * offset - 4 + "px";
-    }
-  }
-
-  if (y - container.offsetHeight < offset * 2) {
-    if (y > window.innerHeight / 2) {
-      container.style.top = document.body.scrollTop + offset + "px";
-    } else {
-      if (y + 2 * offset + container.offsetHeight > window.innerHeight) {
-        container.style.top = document.body.scrollTop + y - (container_vid.offsetHeight - (window.innerHeight - y)) - offset + "px";
-      } else {
-        container.style.top = document.body.scrollTop + offset + y + "px";
+appendImage = function (imageUrl, disableTimeout) {
+  var t, timeout;
+  t = 0;
+  var ce = currentElement;
+  ce.style.cursor = "wait";
+  //timeout = setInterval(function () {
+  //  if (!/hvzoom/.test(currentElement.id) && ce != currentElement) {
+  //    fadeContainer.Out();
+  //    clearInterval(timeout);
+  //  }
+  //  t += 1;
+  //  if (disableTimeout || t >= timeout_length) {
+      container.style.display = "block";
+      var img = new Image();
+      img.onload = function () {
+        container_img.style.display = "block";
+        container_vid.style.display = "none";
+        ce.style.cursor = "";
+        if (imgurAlbum.isAlbum) {
+          if (container_caption.innerHTML != "") {
+            container_caption.style.display = "block";
+          } else {
+            container_caption.style.display = "none";
+          }
+          container_album_index.style.display = "block";
+        } else {
+          container_caption.style.display = "none";
+          container_album_index.style.display = "none";
+        }
+        container_img.src = imageUrl;
+        imageHeight = img.height;
+        imageWidth = img.width;
+        container.style.display = "block";
+        fadeContainer.In();
+        if (currentElement.nodeName === "IMG") {
+          chrome.runtime.sendMessage({ url: currentElement.parentNode.href });
+        } else {
+          chrome.runtime.sendMessage({ url: currentElement.href });
+        }
       }
-    }
-  } else if (y + container_vid.offsetHeight > window.innerHeight / 2 - 2 * offset) {
-    container.style.top = document.body.scrollTop + y - container_vid.offsetHeight - 2 * offset + "px";
-  } else {
-    container.style.top = document.body.scrollTop + y + 2 * offset + "px";
-  }
-  if (container_vid.offsetWidth > container_vid.offsetHeight) {
-    if (y < window.innerHeight / 2) {
-      container.style.height = container_vid.offsetHeight + 2 +  "px";
-      container_vid.style.maxHeight = window.innerHeight - y - 2 * offset + "px";
-    } else {
-      container.style.height = container_vid.offsetHeight + 2 + "px";
-      container_vid.style.maxHeight = y - 2 * offset + "px";
-    }
-  }
-  container_vid.style.maxHeight = window.innerHeight - 2 * offset - 4 + "px";
-  container.style.height = container_vid.offsetHeight + offset + 2 +  "px";
-  container.style.maxHeight = window.innerHeight - 20 - offset + "px";
-  if (container_vid.offsetHeight > window.innerHeight - 2 * offset) {
-    container.style.top = offset + "px";
-  }
+      img.src = imageUrl;
+      //clearInterval(timeout);
+    //}
+  //}, 1)
 };
 
 adjustImageMonitor = function () {
   var interval = setInterval(function () {
-    if (isVideo) {
-      adjustVideoSize();
-    } else {
-      if (container.style.opacity === 0 || container.style.display === "none") {
-        container.style.display = "none";
-      } else {
-        adjustImageSize();
-      }
-    }
+    adjustImageSize();
   }, adjustmentInterval);
 };
 
 hideContainer = function () {
-  container.style.opacity = "0";
   container.style.display = "none";
   container_vid.style.display = "none";
-  container_caption.style.display = "none";
-  container_album_index.style.display = "none";
-  container_caption.innerHTML = "";
-  container_album_index.innerHTML = "";
 };
 
 transitionEnd = function(e) {
@@ -162,17 +157,10 @@ transitionEnd = function(e) {
 fadeContainer = {
 
   In: function () {
-    if (hover_timeout) {
-      return;
-    }
     fadeContainer.fadingOut = false;
     containerActive = true;
     container.style.opacity = "1";
-    if (isVideo) {
-      adjustVideoSize();
-    } else {
-      adjustImageSize();
-    }
+    adjustImageSize();
   },
 
   Out: function () {
@@ -181,41 +169,9 @@ fadeContainer = {
     container_vid.pause();
     fadeContainer.fadingOut = true;
     fadeContainer.transition = true;
-    hover_timeout = true;
     container.style.opacity = "0";
   }
 
-};
-
-appendImage = function (image_url, elem) {
-  var t, timeout;
-  t = 0;
-  timeout = setInterval(function () {
-    if (hover_timeout) {
-      fadeContainer.Out();
-      clearInterval(timeout);
-    }
-    t += 1;
-    if (t >= timeout_length) {
-      container.style.display = "block";
-      elem.style.cursor = "wait";
-      var img = new Image();
-      img.onload = function () {
-        elem.style.cursor = "";
-        container_img.src = image_url;
-        container.style.display = "block";
-        fadeContainer.In();
-        adjustImageSize();
-        if (elem.nodeName === "IMG") {
-          chrome.runtime.sendMessage({ url: elem.parentNode.href });
-        } else {
-          chrome.runtime.sendMessage({ url: elem.href });
-        }
-      }
-      img.src = image_url;
-      clearInterval(timeout);
-    }
-  }, 1)
 };
 
 appendVideo = function (video_url, elem, poster) {
@@ -226,21 +182,23 @@ appendVideo = function (video_url, elem, poster) {
   }
   t = 0;
   timeout = setInterval(function () {
-    if (hover_timeout) {
-      fadeContainer.Out();
-      clearInterval(timeout);
-    }
     t += 1;
     if (t >= timeout_length) {
-      container.style.display = "block";
-      container_vid.style.display = "block";
+      container_img.style.display = "none";
       elem.style.cursor = "wait";
       container.poster = poster;
       container_vid_src.src = video_url;
-      adjustVideoSize();
+      container_vid.onloadedmetadata = function () {
+        imageHeight = container_vid.videoHeight;
+        imageWidth = container_vid.videoWidth;
+        adjustImageSize();
+        elem.style.cursor = "";
+        container.style.display = "block";
+        container_vid.style.display = "block";
+        isVideo = true;
+        fadeContainer.In();
+      }
       container_vid.load();
-      fadeContainer.In();
-      elem.style.cursor = "";
       chrome.runtime.sendMessage({ url: video_url });
       clearInterval(timeout);
     }
@@ -248,21 +206,26 @@ appendVideo = function (video_url, elem, poster) {
 };
 
 setUpImage = function (m, elem) {
-  hover_timeout = false;
   currentElement = elem;
-  appendImage(m, elem);
+  appendImage(m);
 };
 
 setUpVideo = function (m, elem, poster) {
-  hover_timeout = false;
   currentElement = elem;
   appendVideo(m, elem, poster);
 };
 
+var linkLeft, linkTop, linkWidth, linkHeight;
 tryMatch = function (func, elem) {
   if (typeof(func) === "function") {
     func(elem, function (src, poster) {
       if (src) {
+        imageFound = true;
+        var elemRect = elem.getBoundingClientRect();
+        linkLeft = elemRect.left;
+        linkTop = elemRect.top;
+        linkWidth = elemRect.width;
+        linkHeight = elemRect.height;
         Sites.foundMatch = true;
         if (!poster) {
           setUpImage(src, elem);
@@ -276,9 +239,8 @@ tryMatch = function (func, elem) {
 };
 
 getUrlPath = function (elem) {
-  hover_timeout = true;
-  Sites.foundMatch = false;
   if (/hvzoom/.test(elem.id)) return;
+  Sites.foundMatch = false;
   for (var i = 0; i < siteFunctions.length; i++) {
     if (Sites.foundMatch) {
       break;
@@ -289,26 +251,28 @@ getUrlPath = function (elem) {
 
 
 onKeyDown = function (e) {
-  if (imgurAlbum.isAlbum) {
-    if (imgurAlbum.images.length > 1) {
-      if (e.which === 39) {
-        imgurAlbum.index = (imgurAlbum.index + 1 < imgurAlbum.images.length) ? imgurAlbum.index + 1 : 0;
-      } else if (e.which === 37) {
-        imgurAlbum.index = (imgurAlbum.index - 1 < 0) ? imgurAlbum.images.length - 1 : imgurAlbum.index - 1;
-      }
-
-      if (e.which === 37 || e.which === 39) {
-        container_album_index.innerText = imgurAlbum.index + 1 + "/" + imgurAlbum.images.length;
-        container_img.src = imgurAlbum.images[imgurAlbum.index].innerHTML;
-        if (imgurAlbum.captions[imgurAlbum.index].innerHTML !== "") {
+  if (imgurAlbum.images.length > 1) {
+    if (e.which === 39) {
+      imgurAlbum.index = (imgurAlbum.index + 1 < imgurAlbum.images.length) ? imgurAlbum.index + 1 : 0;
+    } else if (e.which === 37) {
+      imgurAlbum.index = (imgurAlbum.index - 1 < 0) ? imgurAlbum.images.length - 1 : imgurAlbum.index - 1;
+    }
+    if (e.which === 37 || e.which === 39) {
+      container_album_index.innerText = imgurAlbum.index + 1 + "/" + imgurAlbum.images.length;
+      var img = new Image();
+      currentElement.style.cursor = "wait";
+      img.onload = function () {
+        currentElement.style.cursor = "";
+        if (imgurAlbum.isAlbum) {
           container_caption.innerText = imgurAlbum.captions[imgurAlbum.index].innerHTML;
           container_caption.style.display = "block";
         } else {
           container_caption.innerHTML = "";
           container_caption.style.display = "none";
         }
-        adjustImageSize();
+        appendImage(img.src, true);
       }
+      img.src = imgurAlbum.images[imgurAlbum.index].innerHTML;
     }
   }
 };
@@ -316,30 +280,39 @@ onKeyDown = function (e) {
 onMouseMove = function (e) {
   x = e.x;
   y = e.y;
-  if (container.style.display === "block" && !/hvzoom/.test(e.target.id) && e.target !== currentElement) {
-    fadeContainer.Out();
-    currentElement = null;
+  if (/hvzoom/.test(e.target.id) || currentElement != e.target) {
+    if (x < linkLeft || x > linkLeft + linkWidth || y < linkTop || y > linkTop + linkHeight) {
+      if (!fadeContainer.fadingOut) {
+        imageFound = false;
+        fadeContainer.Out();
+      }
+    }
   }
-  //if (isGoogleUrl) {
-  //  if (e.target !== currentElement) {
-  //    getUrlPath(e.target);
-  //    hover_timeout = true;
-  //  }
-  //  currentElement = e.target;
-  //}
+  currentElement = e.target;
 };
 
 onMouseWheel = function (e) {
-  if (container.style.display === "block") {
+  if (imageFound && e.x < linkLeft || e.x > linkLeft + linkWidth || e.y < linkTop || e.y > linkTop + linkHeight) {
     fadeContainer.Out();
   }
 };
-
+var skip;
+var ce;
+var waitDone;
 onMouseOver = function (e) {
-  if ((/(DIV|^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName)))) {
-    getUrlPath(e.target);
-    hover_timeout = false;
+  if (!skip && (/(DIV|^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName)))) {
+    ce = e.target;
+    setTimeout(function () {
+      if (ce === e.target) {
+          getUrlPath(e.target);
+      }
+    }, timeout_length);
   }
+  //if (/hvzoom/.test(e.target.id)) {
+  //  skip = true;
+  //} else {
+  //  skip = false;
+  //}
 };
 
 setupElements = function () {
@@ -384,7 +357,6 @@ window.onload = function () {
   container.addEventListener("webkitTransitionEnd", transitionEnd, false);
   adjustImageMonitor();
   siteFunctions = [
-    Sites.normal,
     Sites.imgur,
     Sites.gfycat,
     Sites.livememe,
@@ -396,6 +368,7 @@ window.onload = function () {
     Sites.xkcd,
     Sites.github,
     Sites.gravatar,
+    Sites.normal,
     Sites.deviantart
   ];
 };

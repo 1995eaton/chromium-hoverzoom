@@ -22,15 +22,15 @@ var imgurAlbum = {
     if (!imgurAlbum.images) {
       return;
     }
-    imgurAlbum.isAlbum = true;
     imgurAlbum.index = 0;
     if (imgurAlbum.images.length > 1) {
       container_album_index.innerText = "1/" + imgurAlbum.images.length;
-      container_album_index.style.display = "block";
     }
     if (imgurAlbum.captions[0].innerHTML !== "") {
       container_caption.innerText = imgurAlbum.captions[0].innerHTML;
     }
+    container_caption.style.display = "block";
+    imgurAlbum.isAlbum = true;
     return imgurAlbum.images[0].innerHTML;
   }
 
@@ -130,7 +130,7 @@ Sites.imgur = function (elem, callback) {
       return callback(url.replace('/gallery/', '/') + ".jpg");
     }
     if (/\/gallery\//.test(url)) {
-      return imgurAlbum.getAlbum(url.replace(/.*gallery/, ""));
+      return callback(imgurAlbum.getAlbum(url.replace(/.*gallery/, "")));
     }
     var suffix = url.replace(new RegExp(".*" + stripUrl(url) + "(\/)?", "i"), "");
     if (suffix.length === 7) {
@@ -201,10 +201,8 @@ Sites.googleUserContent = function (elem, callback) {
     if (img.width > elem.width) {
       callback(img.src);
     }
-    elem.style.cursor = "";
   };
   img.src = trimUrl(elem.src);
-  elem.style.cursor = "wait";
 };
 
 Sites.google = function (elem, callback) {
