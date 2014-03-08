@@ -136,6 +136,9 @@ adjustImageMonitor = function () {
 
 hideContainer = function () {
   container.style.display = "none";
+  container.style.opacity = "0";
+  fadeContainer.transition = false;
+  fadeContainer.fadingOut = false;
   container_img.style.display = "none";
   container_vid.style.display = "none";
 };
@@ -161,6 +164,7 @@ fadeContainer = {
     containerActive = false;
     isVideo = false;
     imgurAlbum.isAlbum = false;
+    fadeContainer.transition = false;
     container_vid.pause();
     fadeContainer.fadingOut = true;
     container.style.opacity = "0";
@@ -261,7 +265,7 @@ onMouseMove = function (e) {
 };
 
 onMouseWheel = function (e) {
-  if (imgurAlbum.isAlbum && settings.scrollAlbum) {
+  if (imgurAlbum.isAlbum && settings.scrollAlbum === "true") {
     e.preventDefault();
     if (e.wheelDeltaY < 0) {
       imgurAlbum.getImage(true);
@@ -269,16 +273,18 @@ onMouseWheel = function (e) {
       imgurAlbum.getImage(false);
     }
   } else {
-    fadeContainer.Out();
+    if (!fadeContainer.fadingOut) {
+      fadeContainer.Out();
+    }
   }
 };
 
 var ce;
 onMouseOver = function (e) {
-  if (!imageFound && (/(DIV|^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName)))) {
+  if ((/(DIV|^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName)))) {
     ce = e.target;
     setTimeout(function () {
-      if (ce === e.target) {
+      if (!/hvzoom/.test(ce) && ce === e.target) {
           getUrlPath(e.target);
       }
     }, parseFloat(settings.hoverVal) * 1000);
