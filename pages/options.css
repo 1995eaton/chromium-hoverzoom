@@ -44,19 +44,19 @@ td {
   padding: 5px;
   height: 30px;
   line-height: 30px;
-  padding-bottom: 50px;
 }
 
 tr:nth-child(odd) {
   background-color:#eee;
 }
 
-tr:nth-child(even){
+tr:nth-child(even) {
   background-color:#fff;
 }
 
 table {
   width: 100%;
+  margin-bottom: 40px;
 }
 
 #settings {
@@ -129,24 +129,20 @@ textarea:hover, input:hover {
 textarea:focus, input:focus {
   color: #000;
 }
+
 #save_container {
   position: fixed;
   width: 100%;
   left: 0; right: 0;
   min-width: 750px;
   max-width: 900px;
-  opacity: 0.55;
   width: 75%;
-  background-color: #ddd;
+  background-color: #eee;
   transition: opacity 0.2s ease-in-out;
   text-align: center;
   z-index: 999;
   margin: 0 auto;
   bottom: 0;
-}
-
-#save_container:hover {
-  opacity: 1;
 }
 
 #save_button, #reset_button {

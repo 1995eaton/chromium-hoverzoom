@@ -1,16 +1,21 @@
-var loadSettings, mouseDown, saveRelease, resetRelease;
+var loadSettings, mouseDown, saveRelease, resetRelease, fetchSettings;
 var fade, save, save_clicked, reset_clicked, reset, fadeVal, cssVal, css, hoverDelay, settings, editor;
 
 loadSettings = function () {
   for (var key in settings) {
     if (/true|false/.test(settings[key])) {
-      document.getElementById(key).checked = Boolean(settings[key]);
+      if (settings[key] === "true") {
+        document.getElementById(key).checked = true;
+      } else {
+        document.getElementById(key).checked = false;
+      }
     } else {
+      console.log(settings[key]);
       document.getElementById(key).value = settings[key];
     }
   }
   if (editor) {
-    editor.setValue(settings[key]);
+    editor.setValue(settings["cssVal"]);
   }
 };
 
@@ -19,15 +24,19 @@ resetRelease = function () {
     for (var key in settings) {
       localStorage[key] = "";
     }
-    loadSettings();
+    fetchSettings();
   }
 };
 
 saveRelease = function (e) {
   if (save_clicked) {
     for (var key in settings) {
-      if (typeof(settings[key]) === "boolean") {
-        localStorage[key] = document.getElementById(key).checked;
+      if (/true|false/.test(settings[key])) {
+        if (document.getElementById(key).checked) {
+          localStorage[key] = "true";
+        } else {
+          localStorage[key] = "false";
+        }
       }
       else if (key === "cssVal") {
         localStorage[key] = editor.getValue();
@@ -36,6 +45,10 @@ saveRelease = function (e) {
       }
     }
   }
+  save.innerText = "Saved";
+  setTimeout(function () {
+    save.innerText = "Save";
+  }, 3000);
 };
 
 mouseDown = function (e) {
@@ -46,6 +59,19 @@ mouseDown = function (e) {
   } else if (e.target.id === "reset_button") {
     reset_clicked = true;
   }
+  save.innerText = "Save";
+};
+
+fetchSettings = function (callback) {
+  chrome.runtime.sendMessage({getSettings: true}, function (s) {
+    console.log(s);
+    settings = s;
+    console.log(s);
+    loadSettings();
+    if (callback) {
+      callback();
+    }
+  });
 };
 
 editMode = function (e) {
@@ -66,9 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
   hoverVal = document.getElementById("hoverDelay");
   cssVal = document.getElementById("cssVal");
   dropDown = document.getElementById("edit_mode");
-  chrome.runtime.sendMessage({getSettings: true}, function (s) {
-    settings = s;
-    loadSettings();
+  fetchSettings(function () {
     editor = CodeMirror.fromTextArea(document.getElementById("cssVal"), {lineNumbers: true});
   });
   document.addEventListener("mousedown", mouseDown, false);

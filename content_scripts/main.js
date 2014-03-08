@@ -108,10 +108,12 @@ appendImage = function (imageUrl, disableTimeout) {
     container_vid.style.display = "none";
     adjustImageSize();
     fadeContainer.In();
-    if (currentElement.nodeName === "IMG") {
-      chrome.runtime.sendMessage({ url: currentElement.parentNode.href });
-    } else {
-      chrome.runtime.sendMessage({ url: currentElement.href });
+    if (settings.addHistory === "true") {
+      if (currentElement.nodeName === "IMG") {
+        chrome.runtime.sendMessage({ url: currentElement.parentNode.href });
+      } else {
+        chrome.runtime.sendMessage({ url: currentElement.href });
+      }
     }
     setTimeout(function () {
       container.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + settings.fadeVal + "s ease-out";
