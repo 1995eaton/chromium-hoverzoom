@@ -85,10 +85,7 @@ appendImage = function (imageUrl, disableTimeout) {
   var ce = currentElement;
   ce.style.cursor = "wait";
   container.style.display = "block";
-  container.style.transition = "";
-  container.style.top = document.body.scrollTop + offset + "px";
-  //container.style.transition = "width 0.2s ease-out, height 0.2s ease-out, left 0.2s ease-out, top 0.2s ease-out, opacity " + settings.fadeVal + "s ease-out";
-  container.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + settings.fadeVal + "s ease-out";
+  container.style.transition = "opacity " + settings.fadeVal + "s ease-out";
   var img = new Image();
   img.onload = function () {
     ce.style.cursor = "";
@@ -104,28 +101,33 @@ appendImage = function (imageUrl, disableTimeout) {
       container_album_index.style.display = "none";
     }
     container_img.src = imageUrl;
-    adjustImageSize();
     imageHeight = img.height;
     imageWidth = img.width;
     container.style.display = "block";
     container_img.style.display = "block";
     container_vid.style.display = "none";
+    adjustImageSize();
     fadeContainer.In();
     if (currentElement.nodeName === "IMG") {
       chrome.runtime.sendMessage({ url: currentElement.parentNode.href });
     } else {
       chrome.runtime.sendMessage({ url: currentElement.href });
     }
+    setTimeout(function () {
+      container.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + settings.fadeVal + "s ease-out";
+    }, 25);
   }
   img.src = imageUrl;
 };
 
 adjustImageMonitor = function () {
   var interval = setInterval(function () {
-    if (container.style.display === "none" || container.style.opacity === "0") {
+    if (!fadeContainer.transition) {
       hideContainer();
     } else {
-      adjustImageSize();
+      if (!fadeContainer.fadingOut) {
+        adjustImageSize();
+      }
     }
   }, 1000 / settings.updateIntervalVal);
 };
@@ -149,16 +151,16 @@ fadeContainer = {
   In: function () {
     fadeContainer.fadingOut = false;
     containerActive = true;
+    fadeContainer.transition = true;
     container.style.opacity = "1";
-    adjustImageSize();
   },
 
   Out: function () {
     containerActive = false;
     isVideo = false;
+    imgurAlbum.isAlbum = false;
     container_vid.pause();
     fadeContainer.fadingOut = true;
-    fadeContainer.transition = true;
     container.style.opacity = "0";
   }
 
@@ -234,31 +236,11 @@ getUrlPath = function (elem) {
   }
 };
 
-
 onKeyDown = function (e) {
-  if (imgurAlbum.images.length > 1) {
-    if (e.which === 39) {
-      imgurAlbum.index = (imgurAlbum.index + 1 < imgurAlbum.images.length) ? imgurAlbum.index + 1 : 0;
-    } else if (e.which === 37) {
-      imgurAlbum.index = (imgurAlbum.index - 1 < 0) ? imgurAlbum.images.length - 1 : imgurAlbum.index - 1;
-    }
-    if (e.which === 37 || e.which === 39) {
-      container_album_index.innerText = imgurAlbum.index + 1 + "/" + imgurAlbum.images.length;
-      var img = new Image();
-      currentElement.style.cursor = "wait";
-      img.onload = function () {
-        currentElement.style.cursor = "";
-        if (imgurAlbum.isAlbum) {
-          container_caption.innerText = imgurAlbum.captions[imgurAlbum.index].innerHTML;
-          container_caption.style.display = "block";
-        } else {
-          container_caption.innerHTML = "";
-          container_caption.style.display = "none";
-        }
-        appendImage(img.src, true);
-      }
-      img.src = imgurAlbum.images[imgurAlbum.index].innerHTML;
-    }
+  if (e.which === 39) {
+    imgurAlbum.getImage(true);
+  } else if (e.which === 37) {
+    imgurAlbum.getImage(false);
   }
 };
 
@@ -277,12 +259,21 @@ onMouseMove = function (e) {
 };
 
 onMouseWheel = function (e) {
-  fadeContainer.Out();
+  if (imgurAlbum.isAlbum && settings.scrollAlbum) {
+    e.preventDefault();
+    if (e.wheelDeltaY < 0) {
+      imgurAlbum.getImage(true);
+    } else {
+      imgurAlbum.getImage(false);
+    }
+  } else {
+    fadeContainer.Out();
+  }
 };
 
 var ce;
 onMouseOver = function (e) {
-  if ((/(DIV|^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName)))) {
+  if (!imageFound && (/(DIV|^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName)))) {
     ce = e.target;
     setTimeout(function () {
       if (ce === e.target) {
@@ -334,6 +325,11 @@ window.onload = function () {
   container.addEventListener("webkitTransitionEnd", transitionEnd, false);
   chrome.runtime.sendMessage({getSettings: true}, function (s) {
     settings = s;
+
+    var cssStyle = document.createElement("style");
+    cssStyle.innerText = settings.cssVal;
+    document.getElementsByTagName("head")[0].appendChild(cssStyle);
+
     offset = parseInt(settings.offsetVal);
     adjustImageMonitor();
     siteFunctions = [

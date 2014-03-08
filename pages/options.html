@@ -4,8 +4,10 @@
   <meta charset="UTF-8">
   <title></title>
   <link rel="stylesheet" href="options.css">
+  <link rel="stylesheet" href="codemirror/codemirror.css">
 </head>
 <body>
+<div id="background_main"></div>
 <div id="container_main">
   <div id="container_title">Image Zoom Options</div>
   <div id="settings">
@@ -28,27 +30,50 @@
       </tr>
       <tr>
         <td>
-          <span class="setting">CSS</span>
-          <textarea id="cssVal"></textarea>
-        </td>
-      </tr>
-      <tr>
-        <td>
           <span class="setting">Update interval (updates per second)</span>
-          <input id="updateIntervalVal" type="number" min="0" max="1000">
+          <span class="value">
+            <input id="updateIntervalVal" type="number" min="0" max="1000">
+          </span>
         </td>
       </tr>
       <tr>
         <td>
           <span class="setting">Container offset</span>
-          <input id="offsetVal" type="number" min="0" max="200">
+          <span class="value">
+            <input id="offsetVal" type="number" min="0" max="200">
+          </span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="setting">Use mouse to cycle through imgur albums</span>
+          <span class="value">
+            <input id="scrollAlbum" type="checkbox"/>
+          </span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="setting">CSS
+            <select id="edit_mode">
+              <option disabled>Mode</option>
+              <option>Normal</option>
+              <option>Vim</option>
+            </select>
+          </span>
+          <textarea id="cssVal" name="css"></textarea>
         </td>
       </tr>
     </table>
   </div>
-  <button id="save_button">Save</button>
-  <button id="reset_button">Reset</button>
+  <div id="save_container">
+    <button id="save_button">Save</button>
+    <button id="reset_button">Reset</button>
+  </div>
 </div>
 </body>
 <script src="options.js"></script>
+<script src="codemirror/codemirror.js"></script>
+<script src="codemirror/css.js"></script>
+<script src="codemirror/vim.js"></script>
 </html>

@@ -32,6 +32,31 @@ var imgurAlbum = {
     container_caption.style.display = "block";
     imgurAlbum.isAlbum = true;
     return imgurAlbum.images[0].innerHTML;
+  },
+
+  getImage: function (next) {
+    if (imgurAlbum.images.length > 1) {
+      if (next) {
+        imgurAlbum.index = (imgurAlbum.index + 1 < imgurAlbum.images.length) ? imgurAlbum.index + 1 : 0;
+      } else {
+        imgurAlbum.index = (imgurAlbum.index - 1 < 0) ? imgurAlbum.images.length - 1 : imgurAlbum.index - 1;
+      }
+      container_album_index.innerText = imgurAlbum.index + 1 + "/" + imgurAlbum.images.length;
+      var img = new Image();
+      currentElement.style.cursor = "wait";
+      img.onload = function () {
+        currentElement.style.cursor = "";
+        if (imgurAlbum.isAlbum) {
+          container_caption.innerText = imgurAlbum.captions[imgurAlbum.index].innerHTML;
+          container_caption.style.display = "block";
+        } else {
+          container_caption.innerHTML = "";
+          container_caption.style.display = "none";
+        }
+        appendImage(img.src, true);
+      }
+      img.src = imgurAlbum.images[imgurAlbum.index].innerHTML;
+    }
   }
 
 };
