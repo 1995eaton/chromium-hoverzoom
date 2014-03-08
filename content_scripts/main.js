@@ -1,4 +1,4 @@
-var container, container_img, container_caption, container_album_index, caption_height, x, y, currentElement, fadeContainer, fade_duration, adjustImageSize, appendImage, getUrlPath, offset, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor, adjustmentInterval, adjustImageMonitor, containerActive, hideContainer, setupElements, setUpImage, tryMatch, siteFunctions, isVideo, imageFound, imageHeight, imageWidth, settings;
+var container, container_img, container_caption, container_album_index, caption_height, x, y, currentElement, fadeContainer, fade_duration, adjustImageSize, appendImage, getUrlPath, offset, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor, adjustmentInterval, adjustImageMonitor, containerActive, hideContainer, setupElements, setUpImage, tryMatch, siteFunctions, isVideo, imageFound, imageHeight, imageWidth, settings, ignoreHover;
 //var isGoogleUrl = true;
 var log = console.log.bind(console);
 
@@ -138,6 +138,7 @@ hideContainer = function () {
   container.style.display = "none";
   container.style.opacity = "0";
   fadeContainer.transition = false;
+  ignoreHover = false;
   fadeContainer.fadingOut = false;
   container_img.style.display = "none";
   container_vid.style.display = "none";
@@ -213,7 +214,7 @@ var linkLeft, linkTop, linkWidth, linkHeight;
 tryMatch = function (func, elem) {
   if (typeof(func) === "function") {
     func(elem, function (src, poster) {
-      if (src) {
+      if (!/hvzoom/.test(elem.id) && src) {
         imageFound = true;
         var elemRect = elem.getBoundingClientRect();
         linkLeft = elemRect.left;
@@ -281,14 +282,15 @@ onMouseWheel = function (e) {
 
 var ce;
 onMouseOver = function (e) {
-  if ((/(DIV|^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName)))) {
+  if (!ignoreHover && (/(DIV|^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName)))) {
     ce = e.target;
     setTimeout(function () {
-      if (!/hvzoom/.test(ce) && ce === e.target) {
+      if (ce === e.target) {
           getUrlPath(e.target);
       }
     }, parseFloat(settings.hoverVal) * 1000);
   }
+  ignoreHover = /hvzoom/.test(e.target.id);
 };
 
 setupElements = function () {
