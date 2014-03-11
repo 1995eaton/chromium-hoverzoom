@@ -121,7 +121,9 @@ Sites.twitter = function (elem, callback) {
   } else if (/is-preview/.test(elem.parentNode.className)) {
     img = elem.src;
   }
-  callback(img);
+  if (img) {
+    callback(img);
+  }
 };
 
 Sites.livememe = function (elem, callback) {
