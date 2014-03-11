@@ -1,61 +1,72 @@
-var Sites = {};
+var url, urlArray, Sites, imgurAlbum;
+Sites = {};
 
-var imgurAlbum = {
+imgurAlbum = {
 
   isAlbum: null,
-  images: [],
-  captions: [],
+  id: null,
+  images: function() {
+    if (imgurAlbum.id && imgurAlbum.isAlbum)
+      return imgurAlbum.cached[id].images;
+  },
+  captions: function() {
+    if (imgurAlbum.id && imgurAlbum.isAlbum)
+      return imgurAlbum.cached[id].captions;
+  },
   index: null,
+  cached: {},
 
   getAlbum: function (id) {
-    imgurAlbum.isAlbum = false;
-    imgurAlbum.images = [];
-    imgurAlbum.captions = [];
-    imgurAlbum.index = null;
-    var x = new XMLHttpRequest();
-    x.open("GET", "https://api.imgur.com/2/album/" + id + "/images", false);
-    x.send();
-    x = x.responseXML;
-
-    imgurAlbum.images = x.firstChild.getElementsByTagName('original');
-    imgurAlbum.captions = x.firstChild.getElementsByTagName('caption');
-    if (!imgurAlbum.images) {
-      return;
+    if (!imgurAlbum.cached[id]) {
+      var x = new XMLHttpRequest();
+      x.open("GET", "https://api.imgur.com/2/album/" + id.replace(/#.*/, "") + ".json", false);
+      x.onreadystatechange = function() {
+        var images = JSON.parse(x.responseText).album.images;
+        imgurAlbum.cached[id] = {};
+        imgurAlbum.cached[id].index = 0;
+        imgurAlbum.cached[id].images = [];
+        imgurAlbum.cached[id].captions = [];
+        for (var i = 0; i < images.length; i++) {
+          imgurAlbum.cached[id].images.push(images[i].links.original);
+          imgurAlbum.cached[id].captions.push(images[i].image.caption);
+        }
+      };
+      x.send();
     }
-    imgurAlbum.index = 0;
-    if (imgurAlbum.images.length > 1) {
-      container_album_index.innerText = "1/" + imgurAlbum.images.length;
+    this.id = id;
+    this.isAlbum = true;
+    container_album_index.innerText = this.cached[id].index + 1 + "/" + this.cached[id].images.length;
+    container_caption.innerText = this.cached[this.id].captions[this.cached[this.id].index];
+    if (container_caption.innerText !== "") {
+      container_caption.style.display = "block";
     }
-    if (imgurAlbum.captions[0].innerHTML !== "") {
-      container_caption.innerText = imgurAlbum.captions[0].innerHTML;
-    }
-    container_caption.style.display = "block";
-    imgurAlbum.isAlbum = true;
-    return imgurAlbum.images[0].innerHTML;
+    return this.cached[id].images[this.cached[id].index];
   },
 
   getImage: function (next) {
-    if (imgurAlbum.images.length > 1) {
+    var albumLength = this.cached[this.id].images.length;
+    var index = this.cached[this.id].index;
+    if (this.cached[this.id].images.length > 1) {
       if (next) {
-        imgurAlbum.index = (imgurAlbum.index + 1 < imgurAlbum.images.length) ? imgurAlbum.index + 1 : 0;
+        this.cached[this.id].index = (index + 1 < albumLength) ? index + 1 : 0;
       } else {
-        imgurAlbum.index = (imgurAlbum.index - 1 < 0) ? imgurAlbum.images.length - 1 : imgurAlbum.index - 1;
+        this.cached[this.id].index = (index - 1 < 0) ? albumLength - 1 : index - 1;
       }
-      container_album_index.innerText = imgurAlbum.index + 1 + "/" + imgurAlbum.images.length;
+      container_album_index.innerText = this.cached[this.id].index + 1 + "/" + albumLength;
       var img = new Image();
-      currentElement.style.cursor = "wait";
       img.onload = function () {
         currentElement.style.cursor = "";
         if (imgurAlbum.isAlbum) {
-          container_caption.innerText = imgurAlbum.captions[imgurAlbum.index].innerHTML;
+          container_caption.innerText = imgurAlbum.cached[imgurAlbum.id].captions[imgurAlbum.cached[imgurAlbum.id].index];
           container_caption.style.display = "block";
-        } else {
+        }
+        if (container_caption.innerHTML === "") {
           container_caption.innerHTML = "";
           container_caption.style.display = "none";
         }
         appendImage(img.src, true);
       }
-      img.src = imgurAlbum.images[imgurAlbum.index].innerHTML;
+      img.src = this.cached[this.id].images[this.cached[this.id].index];
     }
   }
 
@@ -76,7 +87,7 @@ var stripUrl = function (url) {
 };
 
 Sites.github = function (elem, callback) {
-  var url = elem.src;
+  url = elem.src;
   if (!url || !/avatars/.test(url) || !/githubusercontent\.com/.test(stripUrl(url))) {
     return;
   }
@@ -84,7 +95,7 @@ Sites.github = function (elem, callback) {
 };
 
 Sites.gravatar = function (elem, callback) {
-  var url = elem.src;
+  url = elem.src;
   if (!url || !/gravatar\.com/.test(stripUrl(url)) || !basicMatch(url)) {
     return;
   }
@@ -127,7 +138,7 @@ Sites.livememe = function (elem, callback) {
 
 
 Sites.imgur = function (elem, callback) {
-  var urlArray = [];
+  urlArray = [];
   if (elem.href) {
     urlArray.push(elem.href);
   }
@@ -138,7 +149,6 @@ Sites.imgur = function (elem, callback) {
     return false;
   }
 
-  var url;
   for (var i = 0; i < urlArray.length; i++) {
     url = urlArray[i];
     if (/\/random/.test(url) || !/imgur\.com/i.test(stripUrl(url))) {
@@ -165,7 +175,7 @@ Sites.imgur = function (elem, callback) {
 };
 
 Sites.wikimedia = function (elem, callback) {
-  var url = elem.src;
+  url = elem.src;
   if (/(wikipedia|wikimedia)\.org/i.test(stripUrl(url)) && !/\.ogv|\.ogg/.test(url) && basicMatch(url)) {
     url = url.replace(/\/thumb/, "");
     if (/.*\.(png|jpg|jpeg|gif|svg|tif).*\.(png|jpg|jpeg|gif|svg|tif)/i.test(url)) {
@@ -202,12 +212,18 @@ Sites.facebook = function (elem, callback) {
 
 Sites.deviantart = function (elem, callback) {
   var base = /deviantart\.(com|net)/i;
-  if (!base.test(elem.src)) {
+  if (!base.test(document.URL))
     return;
-  }
-  if (!/\/(avatars|emoticons)\//.test(elem.src) && (base.test(stripUrl(elem.src)) || basicMatch(elem.src))) {
-    callback((elem.src.replace(/(\.(com|net)\/([^\/]+))\/([^\/]+)/g, "$1")));
-  }
+
+  if (elem.nodeName === "DIV" && elem.style.backgroundImage)
+    url = elem.style.backgroundImage.replace(/url\(/i, "").replace(/\)$/i, "");
+  else
+    url = elem.src;
+
+  if (/\/fs([0-9]+)\/[a-zA-Z]\//.test(url))
+    callback(url);
+  else if (!/\/(avatars|emoticons)\//.test(url) && (base.test(stripUrl(url)) || basicMatch(url)))
+    callback((url.replace(/(\.(com|net)\/([^\/]+))\/([^\/]+)/g, "$1")));
 };
 
 Sites.googleUserContent = function (elem, callback) {
@@ -240,8 +256,7 @@ Sites.google = function (elem, callback) {
 
 Sites.normal = function (elem, callback) {
   var imageFound;
-  var url;
-  var urlArray = [];
+  urlArray = [];
   if (elem.href && basicMatch(elem.href)) {
     urlArray.push(elem.href);
   }
@@ -263,16 +278,12 @@ Sites.normal = function (elem, callback) {
 };
 
 Sites.gfycat = function (elem, callback) {
-  var urlArray = [];
-  if (elem.href && !basicMatch(elem.href)) {
+  urlArray = [];
+  if (elem.href && !basicMatch(elem.href))
     urlArray.push(elem.href);
-  }
-  if (elem.parentNode && !basicMatch(elem.parentNode.href)) {
+  if (elem.parentNode && !basicMatch(elem.parentNode.href))
     urlArray.push(elem.parentNode.href);
-  }
-  if (urlArray.length === 0) {
-    return false;
-  }
+  if (urlArray.length === 0) return false;
   function getGfySource (url) {
     var x = new XMLHttpRequest();
     x.open("GET", url);
@@ -284,17 +295,27 @@ Sites.gfycat = function (elem, callback) {
   }
   for (var i = 0; i < urlArray.length; i++) {
     url = urlArray[i];
-    if (/\.gif$/.test(url) || !/gfycat\.com/.test(stripUrl(url))) {
-      continue;
-    }
+    if (/\.gif$/.test(url) || !/gfycat\.com/.test(stripUrl(url))) continue;
     isVideo = true;
     getGfySource(url.replace(/[^a-zA-Z_-]+$/, ""));
     break;
   }
 };
 
+Sites.webm = function (elem, callback) {
+  if (/\.webm$/.test(elem.parentNode.href)) {
+    callback(elem.parentNode.href, "1");
+  } else if (/\.webm$/.test(elem.href)) {
+    callback(elem.href, "1");
+  } else if (/\.m4v$/.test(elem.href)) {
+    isVideo = true;
+    container_vid_src.type = "video/mp4";
+    callback(elem.href, "1");
+  }
+};
+
 Sites.xkcd = function (elem, callback) {
-  var urlArray = [];
+  urlArray = [];
   if (elem.href) {
     urlArray.push(elem.href);
   }

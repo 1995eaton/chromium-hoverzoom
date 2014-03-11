@@ -1,5 +1,5 @@
-var container, container_img, container_caption, container_album_index, caption_height, x, y, currentElement, fadeContainer, fade_duration, adjustImageSize, appendImage, getUrlPath, offset, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor, adjustmentInterval, adjustImageMonitor, containerActive, hideContainer, setupElements, setUpImage, tryMatch, siteFunctions, isVideo, imageFound, imageHeight, imageWidth, settings, ignoreHover;
-//var isGoogleUrl = true;
+var container, container_img, container_close, container_caption, container_album_index, caption_height, x, y, currentElement, fadeContainer, fade_duration, adjustImageSize, appendImage, getUrlPath, offset, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor, adjustmentInterval, adjustImageMonitor, containerActive, hideContainer, setupElements, setUpImage, tryMatch, siteFunctions, isVideo, imageFound, imageHeight, imageWidth, settings, ignoreHover, link, hoveredElement, metaHeld, shiftHeld, freezeImage, closeContainer, dragImage, dragX, dragY, metaHeld;
+var isGoogleUrl = true;
 var log = console.log.bind(console);
 
 
@@ -75,9 +75,10 @@ adjustImageSize = function () {
     container.style.width = imageWidth + "px";
     container.style.height = imageHeight + "px";
   }
-
-  container.style.left = getImagePosX();
-  container.style.top = getImagePosY();
+  if (!freezeImage) {
+    container.style.left = getImagePosX();
+    container.style.top = getImagePosY();
+  }
 
 };
 
@@ -86,26 +87,32 @@ appendImage = function (imageUrl, disableTimeout) {
   ce.style.cursor = "wait";
   container.style.display = "block";
   container.style.transition = "opacity " + settings.fadeVal + "s ease-out";
+  document.addEventListener("mousewheel", onMouseWheel, false);
+  if (imgurAlbum.isAlbum) {
+    if (imgurAlbum.cached[imgurAlbum.id].captions[imgurAlbum.cached[imgurAlbum.id].index] !== "") {
+      container_caption.style.display = "block";
+    } else {
+      container_caption.style.display = "none";
+    }
+    container_album_index.style.display = "block";
+  } else {
+    container_caption.style.display = "none";
+    container_album_index.style.display = "none";
+  }
   var img = new Image();
   img.onload = function () {
     ce.style.cursor = "";
-    if (imgurAlbum.isAlbum) {
-      if (container_caption.innerHTML != "") {
-        container_caption.style.display = "block";
-      } else {
-        container_caption.style.display = "none";
-      }
-      container_album_index.style.display = "block";
-    } else {
-      container_caption.style.display = "none";
-      container_album_index.style.display = "none";
-    }
     container_img.src = imageUrl;
     imageHeight = img.height;
     imageWidth = img.width;
     container.style.display = "block";
     container_img.style.display = "block";
     container_vid.style.display = "none";
+    if (!freezeImage) {
+      container.style.transition = "opacity" + settings.fadeVal + "s ease-out";
+    } else {
+      container.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + settings.fadeVal + "s ease-out";
+    }
     adjustImageSize();
     fadeContainer.In();
     if (settings.addHistory === "true") {
@@ -128,8 +135,13 @@ adjustImageMonitor = function () {
       hideContainer();
     } else {
       if (!fadeContainer.fadingOut) {
-        adjustImageSize();
+        if (!freezeImage && !metaHeld) {
+          adjustImageSize();
+        }
       }
+    }
+    if (!containerActive) {
+      clearInterval(interval);
     }
   }, 1000 / settings.updateIntervalVal);
 };
@@ -146,8 +158,8 @@ hideContainer = function () {
 
 transitionEnd = function(e) {
   if (fadeContainer.fadingOut) {
-    fadeContainer.transition = false;
     fadeContainer.fadingOut = false;
+    fadeContainer.transition = false;
     hideContainer();
   }
 };
@@ -165,8 +177,13 @@ fadeContainer = {
     containerActive = false;
     isVideo = false;
     imgurAlbum.isAlbum = false;
-    fadeContainer.transition = false;
-    container_vid.pause();
+    container_close.style.opacity = "0";
+    document.removeEventListener("mousedown", onMouseDown, false);
+    document.removeEventListener("mouseup", onMouseUp, false);
+    document.removeEventListener("keydown", onKeyDown, false);
+    document.removeEventListener("keyup", onKeyUp, false);
+    document.removeEventListener("mousewheel", onMouseWheel, false);
+    container.removeEventListener("webkitTransitionEnd", transitionEnd, false);
     fadeContainer.fadingOut = true;
     container.style.opacity = "0";
   }
@@ -178,20 +195,30 @@ appendVideo = function (video_url, elem, poster) {
     container_img.src = "";
     container_vid_src.src = "";
   }
+  container.style.transition = "opacity " + settings.fadeVal + "s ease-out";
+  container_vid.removeAttribute("controls");
   container_img.style.display = "none";
   elem.style.cursor = "wait";
   container.poster = poster;
   container_vid_src.src = video_url;
   container_vid.onloadedmetadata = function () {
+    container.style.display = "block";
+    container_vid.style.display = "block";
     imageHeight = container_vid.videoHeight;
     imageWidth = container_vid.videoWidth;
     adjustImageSize();
     elem.style.cursor = "";
-    container.style.display = "block";
-    container_vid.style.display = "block";
+    if (!freezeImage) {
+      container.style.transition = "opacity" + settings.fadeVal + "s ease-out";
+    } else {
+      container.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + settings.fadeVal + "s ease-out";
+    }
     isVideo = true;
-    fadeContainer.In();
   }
+  fadeContainer.In();
+  setTimeout(function () {
+    container.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + settings.fadeVal + "s ease-out";
+  }, 25);
   container_vid.load();
   if (elem.href) {
     chrome.runtime.sendMessage({ url: elem.href });
@@ -210,30 +237,31 @@ setUpVideo = function (m, elem, poster) {
   appendVideo(m, elem, poster);
 };
 
-var linkLeft, linkTop, linkWidth, linkHeight;
 tryMatch = function (func, elem) {
-  if (typeof(func) === "function") {
-    func(elem, function (src, poster) {
-      if (!/hvzoom/.test(elem.id) && src) {
-        imageFound = true;
-        var elemRect = elem.getBoundingClientRect();
-        linkLeft = elemRect.left;
-        linkTop = elemRect.top;
-        linkWidth = elemRect.width;
-        linkHeight = elemRect.height;
-        Sites.foundMatch = true;
-        if (!poster) {
-          setUpImage(src, elem);
-        } else {
-          isVideo = true;
-          setUpVideo(src, elem, poster);
-        }
+  func(elem, function (src, poster) {
+    if (src) {
+      adjustImageMonitor();
+      imageFound = true;
+      container.addEventListener("webkitTransitionEnd", transitionEnd, false);
+      document.addEventListener("keydown", onKeyDown, false);
+      document.addEventListener("keyup", onKeyUp, false);
+      document.addEventListener("mousedown", onMouseDown, false);
+      document.addEventListener("mouseup", onMouseUp, false);
+      link = elem.getBoundingClientRect();
+      Sites.foundMatch = true;
+      if (!poster) {
+        setUpImage(src, elem);
+      } else {
+        isVideo = true;
+        setUpVideo(src, elem, poster);
       }
-    });
-  }
+    }
+  });
 };
 
 getUrlPath = function (elem) {
+  if (basicMatch(document.URL))
+    return;
   Sites.foundMatch = false;
   for (var i = 0; i < siteFunctions.length; i++) {
     if (Sites.foundMatch) {
@@ -244,49 +272,128 @@ getUrlPath = function (elem) {
 };
 
 onKeyDown = function (e) {
-  if (e.which === 39) {
-    imgurAlbum.getImage(true);
-  } else if (e.which === 37) {
-    imgurAlbum.getImage(false);
-  }
-};
-
-onMouseMove = function (e) {
-  x = e.x;
-  y = e.y;
-  if (/hvzoom/.test(e.target.id) || currentElement != e.target) {
-    if (x < linkLeft || x > linkLeft + linkWidth || y < linkTop || y > linkTop + linkHeight) {
-      if (!fadeContainer.fadingOut) {
-        imageFound = false;
+  if (containerActive) {
+    switch (e.which) {
+      case 39:
+        if (imgurAlbum.isAlbum)
+          imgurAlbum.getImage(true);
+        break;
+      case 37:
+        if (imgurAlbum.isAlbum)
+          imgurAlbum.getImage(false);
+        break;
+      case 67:
+        if (imgurAlbum.isAlbum)
+          container_caption.style.display = (container_caption.style.display === "block") ? "none" : "block";
+        break;
+      case 91:
+        metaHeld = true;
+        container.style.pointerEvents = "auto";
+        break;
+      case 32:
+        if (isVideo) {
+          e.preventDefault();
+          if (container_vid.paused)
+            container_vid.play();
+          else
+            container_vid.pause();
+        }
+        break;
+      default:
+        closeContainer();
         fadeContainer.Out();
-      }
     }
   }
-  currentElement = e.target;
 };
 
-onMouseWheel = function (e) {
-  if (imgurAlbum.isAlbum && settings.scrollAlbum === "true") {
-    e.preventDefault();
-    if (e.wheelDeltaY < 0) {
-      imgurAlbum.getImage(true);
-    } else {
-      imgurAlbum.getImage(false);
-    }
-  } else {
-    if (!fadeContainer.fadingOut) {
+onKeyUp = function (e) {
+  if (e.which === 91) {
+    metaHeld = false;
+    if (!freezeImage) {
       fadeContainer.Out();
     }
   }
 };
 
-var ce;
+closeContainer = function () {
+  freezeImage = false;
+  dragImage = false;
+  metaHeld = false;
+  container.style.pointerEvents = "none";
+  fadeContainer.Out();
+};
+
+onMouseUp = function (e) {
+  dragImage = false;
+  if (e.target === container_close) {
+    closeContainer();
+  }
+};
+
+onMouseMove = function (e) {
+  x = e.x; y = e.y;
+  if (imageFound) {
+    if (dragImage) {
+      e.preventDefault();
+      container.style.left = document.body.scrollLeft + e.x - dragX + "px";
+      container.style.top = document.body.scrollTop + e.y - dragY + "px";
+    }
+    if (link) {
+      if (!freezeImage && !metaHeld && (ignoreHover || currentElement != e.target)) {
+        if ((x < link.left || x > link.left + link.width || y < link.top || y > link.top + link.height) && !fadeContainer.fadingOut) {
+          imageFound = false;
+          fadeContainer.Out();
+        }
+      }
+      currentElement = e.target;
+    }
+  }
+};
+
+onMouseWheel = function (e) {
+  if (imgurAlbum.isAlbum) {
+    if ((imageFound && !freezeImage) || (freezeImage && /hvzoom/.test(e.target.id))) {
+      e.preventDefault();
+      if (e.wheelDeltaY < 0) {
+        imgurAlbum.getImage(true);
+      } else {
+        imgurAlbum.getImage(false);
+      }
+    }
+  } else {
+    fadeContainer.Out();
+  }
+};
+
+onMouseDown = function (e) {
+  if (dragImage) {
+    dragImage = false;
+  }
+  if (e.target === container_img || e.target === container_vid) {
+    if (isVideo) {
+      container_vid.setAttribute("controls", "controls");
+    }
+    if (freezeImage) {
+      if ((isVideo && e.pageY < container.offsetHeight + container.offsetTop - 40) || !isVideo) {
+        container.style.transition = "opacity " + settings.fadeVal + "s ease-out";
+        dragImage = true;
+      }
+      dragX = document.body.scrollLeft + e.x - container.offsetLeft;
+      dragY = document.body.scrollTop + e.y - container.offsetTop;
+    } else if (metaHeld) {
+      container_close.style.opacity = "1";
+      freezeImage = true;
+      metaHeld = false;
+    }
+  }
+};
+
 onMouseOver = function (e) {
-  if (!ignoreHover && (/(DIV|^I$|IMG|A)/.test(e.target.nodeName) || (e.target.firstChild && /(^I$|IMG|A)/.test(e.target.firstChild.nodeName)))) {
-    ce = e.target;
+  if (!freezeImage && !metaHeld || e.nodeName === "DIV" || e.nodeName === "A" || e.nodeName === "IMG") {
+    hoveredElement = e.target;
     setTimeout(function () {
-      if (ce === e.target) {
-          getUrlPath(e.target);
+      if (hoveredElement === e.target) {
+        getUrlPath(e.target);
       }
     }, parseFloat(settings.hoverVal) * 1000);
   }
@@ -294,68 +401,44 @@ onMouseOver = function (e) {
 };
 
 setupElements = function () {
-
   container = document.createElement("div");
   container.id = "hvzoom_img_container_main";
-  document.body.appendChild(container);
-
+  document.children[0].appendChild(container);
   container_img = document.createElement("img");
   container_img.id = "hvzoom_img_container_image";
   container.appendChild(container_img);
-
+  container_close = document.createElement("div");
+  container_close.id = "hvzoom_img_close_icon";
+  container_close.innerText = "Close";
+  container.appendChild(container_close);
   container_caption = document.createElement("div");
   container_caption.id = "hvzoom_img_container_caption";
   container.appendChild(container_caption);
-
   container_album_index = document.createElement("div");
   container_album_index.id = "hvzoom_img_album_index";
   container.appendChild(container_album_index);
-
   container_vid = document.createElement("video");
   container_vid.autoplay = true;
   container_vid.loop = true;
   container_vid.muted = "muted";
   container_vid.id = "hvzoom_img_container_video";
-
   container_vid_src = document.createElement("source");
   container_vid_src.id = "hvzoom_vid_src";
   container_vid_src.type = "video/webm";
-
   container.appendChild(container_vid);
   container_vid.appendChild(container_vid_src);
-
 }
 
-window.onload = function () {
+document.addEventListener("DOMContentLoaded", function() {
   setupElements();
-  document.addEventListener("keydown", onKeyDown, false);
-  document.addEventListener("mousewheel", onMouseWheel, false);
-  document.addEventListener("mousemove", onMouseMove, false);
-  document.addEventListener("mouseover", onMouseOver, false);
-  container.addEventListener("webkitTransitionEnd", transitionEnd, false);
   chrome.runtime.sendMessage({getSettings: true}, function (s) {
     settings = s;
-
     var cssStyle = document.createElement("style");
     cssStyle.innerText = settings.cssVal;
-    document.getElementsByTagName("head")[0].appendChild(cssStyle);
-
     offset = parseInt(settings.offsetVal);
-    adjustImageMonitor();
-    siteFunctions = [
-      Sites.imgur,
-      Sites.gfycat,
-      Sites.livememe,
-      Sites.twitter,
-      Sites.facebook,
-      Sites.googleUserContent,
-      Sites.google,
-      Sites.wikimedia,
-      Sites.xkcd,
-      Sites.github,
-      Sites.gravatar,
-      Sites.normal,
-      Sites.deviantart
-    ];
+    siteFunctions = [Sites.webm, Sites.imgur, Sites.gfycat, Sites.livememe, Sites.twitter, Sites.facebook, Sites.googleUserContent, Sites.google, Sites.wikimedia, Sites.xkcd, Sites.github, Sites.gravatar, Sites.normal, Sites.deviantart];
+    document.getElementsByTagName("head")[0].appendChild(cssStyle);
+    document.addEventListener("mousemove", onMouseMove, false);
+    document.addEventListener("mouseover", onMouseOver, false);
   });
-};
+});

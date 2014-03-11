@@ -5,9 +5,8 @@ var settingsDefault = {
   offsetVal: 25,
   addHistory: "true",
   scrollAlbum: "false",
-  updateIntervalVal: 5,
-  cssVal: "#hvzoom_img_container_main {\n  position: absolute;\n  left: 0;\n  top: 0;\n  opacity: 0;\n  text-align: center;\n  background-color: rgba(255, 255, 255, 0.75);\n  box-shadow: 0px 0px 8px #000;\n  z-index: 2147483647;\n  display: none;\n}\n\n#hvzoom_img_container_caption {\n  position: absolute;\n  text-align: center;\n  background-color: rgba(0, 0, 0, 0.75);\n  color: #fff;\n  word-wrap: break-word;\n  border-top-left-radius: 0;\n  border-top-right-radius: 0;\n  width: calc(100% - 4px);\n  left: 2px;\n  bottom: 2px;\n  box-sizing: border-box;\n  padding: 3px;\n  display: none;\n}\n\n#hvzoom_img_album_index {\n  position: absolute;\n  top: 2px;\n  left: 2px;\n  box-sizing: border-box;\n  background-color: rgba(0, 0, 0, 0.75);\n  color: #fff;\n  padding: 2px;\n  border-top-right-radius: 0;\n  border-bottom-left-radius: 0;\n  display: none;\n}\n\n#hvzoom_img_container_image {\n  position: absolute;\n  left: 2px;\n  top: 2px;\n  text-align: center;\n  height: calc(100% - 4px);\n  width: calc(100% - 4px);\n}\n\n#hvzoom_img_container_video {\n  position: absolute;\n  left: 2px;\n  top: 2px;\n  height: calc(100% - 4px);\n  width: calc(100% - 4px);\n  display: none;\n}"
-
+cssVal: "#hvzoom_img_container_main {\n text-align: center;\n background-color: rgba(0,0,0,0.75);\n box-shadow: 0 0 15px rgba(0,0,0,0.5);\n}\n\n#hvzoom_img_container_caption {\n width: 100%; left: 0;\n bottom: 0;\n padding: 3px;\n background-color: rgba(0, 0, 0, 0.75);\n color: #fff;\n box-sizing: border-box;\n word-wrap: break-word;\n}\n\n#hvzoom_img_album_index {\n top: 0px; left: 0px;\n padding: 2px;\n background-color: rgba(0, 0, 0, 0.75);\n color: #fff;\n box-sizing: border-box;\n}\n\n#hvzoom_img_container_image {\n height: 100%; top: 0;\n width: 100%; left: 0;\n}\n\n#hvzoom_img_container_video {\n height: 100%; top: 0;\n width: 100%; left: 0;\n}",
+  updateIntervalVal: 5
 };
 
 chrome.runtime.onMessage.addListener(function (request, sender, response) {
@@ -20,7 +19,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, response) {
         settings[key] = settingsDefault[key];
       }
     }
-    console.log(settings);
     response(settings);
   }
 });

@@ -26,6 +26,7 @@
              "content_scripts/main.js",
              "content_scripts/sites.js"
             ],
+      "css": [ "content_scripts/main_nomodify.css" ],
       "run_at": "document_start",
       "all_frames": true
     }

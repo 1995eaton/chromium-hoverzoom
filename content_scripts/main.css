@@ -1,58 +1,33 @@
 #hvzoom_img_container_main {
-  position: absolute;
-  left: 0;
-  top: 0;
-  opacity: 0;
   text-align: center;
-  background-color: rgba(255, 255, 255, 0.75);
-  box-shadow: 0px 0px 8px #000;
-  z-index: 2147483647;
-  display: none;
+  background-color: rgba(0,0,0,0.75);
+  box-shadow: 0 0 15px rgba(0,0,0,0.5);
 }
 
 #hvzoom_img_container_caption {
-  position: absolute;
-  text-align: center;
+  width: 100%; left: 0;
+  bottom: 0;
+  padding: 3px;
   background-color: rgba(0, 0, 0, 0.75);
   color: #fff;
-  word-wrap: break-word;
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
-  width: calc(100% - 4px);
-  left: 2px;
-  bottom: 2px;
   box-sizing: border-box;
-  padding: 3px;
-  display: none;
+  word-wrap: break-word;
 }
 
 #hvzoom_img_album_index {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  box-sizing: border-box;
+  top: 0px; left: 0px;
+  padding: 2px;
   background-color: rgba(0, 0, 0, 0.75);
   color: #fff;
-  padding: 2px;
-  border-top-right-radius: 0;
-  border-bottom-left-radius: 0;
-  display: none;
+  box-sizing: border-box;
 }
 
 #hvzoom_img_container_image {
-  position: absolute;
-  left: 2px;
-  top: 2px;
-  text-align: center;
-  height: calc(100% - 4px);
-  width: calc(100% - 4px);
+  height: 100%; top: 0;
+  width: 100%; left: 0;
 }
 
 #hvzoom_img_container_video {
-  position: absolute;
-  left: 2px;
-  top: 2px;
-  height: calc(100% - 4px);
-  width: calc(100% - 4px);
-  display: none;
+  height: 100%; top: 0;
+  width: 100%; left: 0;
 }

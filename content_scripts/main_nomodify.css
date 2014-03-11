@@ -1,0 +1,47 @@
+#hvzoom_img_container_main {
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  font-family: "Helvetica", "Arial", "Sans";
+  font-size: 9pt;
+  z-index: 2147483647;
+  display: none;
+}
+
+#hvzoom_img_container_caption {
+  position: absolute;
+  display: none;
+}
+
+#hvzoom_img_album_index {
+  position: absolute;
+  display: none;
+}
+
+#hvzoom_img_close_icon {
+  position: absolute;
+  transition: top 0.2s ease-out, opacity 0.2s ease-out;
+  padding: 4px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  opacity: 0;
+  height: 15px;
+  z-index: -1;
+  color: #fff;
+  top: 0; right: 0;
+  background-color: rgba(0,0,0,0.75);;
+}
+
+#hvzoom_img_container_main:hover > #hvzoom_img_close_icon {
+  top: -23px;
+}
+
+#hvzoom_img_container_image {
+  position: absolute;
+}
+
+#hvzoom_img_container_video {
+  position: absolute;
+  transition: opacity 0.2s ease-out;
+  display: none;
+}
