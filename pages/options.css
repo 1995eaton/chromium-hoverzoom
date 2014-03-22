@@ -149,3 +149,30 @@ textarea:focus, input:focus {
   width: 55px;
   margin: 5px;
 }
+
+#blacklists {
+  float: right;
+  width: 75%;
+  height: 150px;
+}
+
+.help {
+  color: blue;
+  z-index: 99999999;
+  cursor: pointer;
+}
+
+.description {
+  background-color: white;
+  position: relative;
+  border: 1px solid #000;
+  border-radius: 4px;
+  font-size: 10pt;
+  cursor: initial;
+  z-index: 99999999;
+  max-width: 60%;
+  text-align: center;
+  line-height: 1.1;
+  color: #000;
+  font-style: italic;
+}

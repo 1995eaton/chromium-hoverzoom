@@ -1,4 +1,5 @@
 var container, container_img, container_close, container_caption, container_album_index, caption_height, x, y, currentElement, fadeContainer, fade_duration, adjustImageSize, appendImage, getUrlPath, offset, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor, adjustmentInterval, adjustImageMonitor, containerActive, hideContainer, setupElements, setUpImage, tryMatch, siteFunctions, isVideo, imageFound, imageHeight, imageWidth, settings, ignoreHover, link, hoveredElement, metaHeld, shiftHeld, freezeImage, closeContainer, dragImage, dragX, dragY, metaHeld;
+var isDisabled = false;
 var isGoogleUrl = true;
 var log = console.log.bind(console);
 
@@ -117,9 +118,9 @@ appendImage = function (imageUrl, disableTimeout) {
     fadeContainer.In();
     if (settings.addHistory === "true") {
       if (currentElement.nodeName === "IMG") {
-        chrome.runtime.sendMessage({ url: currentElement.parentNode.href });
+        chrome.runtime.sendMessage({action: "addHistory", url: currentElement.parentNode.href});
       } else {
-        chrome.runtime.sendMessage({ url: currentElement.href });
+        chrome.runtime.sendMessage({action: "addHistory", url: currentElement.href});
       }
     }
     setTimeout(function () {
@@ -164,11 +165,19 @@ transitionEnd = function(e) {
   }
 };
 
+disableContainer = function() {
+  document.removeEventListener("mousedown", onMouseDown, false);
+  document.removeEventListener("mouseup", onMouseUp, false);
+  document.removeEventListener("mousewheel", onMouseWheel, false);
+  container.removeEventListener("webkitTransitionEnd", transitionEnd, false);
+};
+
 fadeContainer = {
 
   In: function () {
     fadeContainer.fadingOut = false;
     containerActive = true;
+    adjustImageMonitor();
     fadeContainer.transition = true;
     container.style.opacity = "1";
   },
@@ -178,12 +187,7 @@ fadeContainer = {
     isVideo = false;
     imgurAlbum.isAlbum = false;
     container_close.style.opacity = "0";
-    document.removeEventListener("mousedown", onMouseDown, false);
-    document.removeEventListener("mouseup", onMouseUp, false);
-    document.removeEventListener("keydown", onKeyDown, false);
-    document.removeEventListener("keyup", onKeyUp, false);
-    document.removeEventListener("mousewheel", onMouseWheel, false);
-    container.removeEventListener("webkitTransitionEnd", transitionEnd, false);
+    disableContainer();
     fadeContainer.fadingOut = true;
     container.style.opacity = "0";
   }
@@ -240,11 +244,8 @@ setUpVideo = function (m, elem, poster) {
 tryMatch = function (func, elem) {
   func(elem, function (src, poster) {
     if (src) {
-      adjustImageMonitor();
       imageFound = true;
       container.addEventListener("webkitTransitionEnd", transitionEnd, false);
-      document.addEventListener("keydown", onKeyDown, false);
-      document.addEventListener("keyup", onKeyUp, false);
       document.addEventListener("mousedown", onMouseDown, false);
       document.addEventListener("mouseup", onMouseUp, false);
       link = elem.getBoundingClientRect();
@@ -272,7 +273,20 @@ getUrlPath = function (elem) {
 };
 
 onKeyDown = function (e) {
-  if (containerActive) {
+  if (e.which === 90) {
+      isDisabled = !isDisabled;
+      if (isDisabled) {
+        document.removeEventListener("mouseover", onMouseOver, false);
+        document.removeEventListener("mousemove", onMouseMove, false);
+        if (containerActive) {
+          closeContainer();
+          fadeContainer.Out();
+        }
+      } else {
+        document.addEventListener("mouseover", onMouseOver, false);
+        document.addEventListener("mousemove", onMouseMove, false);
+      }
+  } else if (containerActive) {
     switch (e.which) {
       case 39:
         if (imgurAlbum.isAlbum)
@@ -299,9 +313,14 @@ onKeyDown = function (e) {
             container_vid.pause();
         }
         break;
+      case 65:
+        if (containerActive && container_img.src) {
+          chrome.runtime.sendMessage({action: "openLink", url: container_img.src});
+        }
+        break;
       default:
         closeContainer();
-        fadeContainer.Out();
+        break;
     }
   }
 };
@@ -351,8 +370,8 @@ onMouseMove = function (e) {
 };
 
 onMouseWheel = function (e) {
-  if (imgurAlbum.isAlbum) {
-    if ((imageFound && !freezeImage) || (freezeImage && /hvzoom/.test(e.target.id))) {
+  if (imgurAlbum.isAlbum && (settings.scrollAlbum || freezeImage)) {
+    if (!freezeImage || (/hvzoom/.test(e.target.id) && freezeImage)) {
       e.preventDefault();
       if (e.wheelDeltaY < 0) {
         imgurAlbum.getImage(true);
@@ -433,12 +452,26 @@ document.addEventListener("DOMContentLoaded", function() {
   setupElements();
   chrome.runtime.sendMessage({getSettings: true}, function (s) {
     settings = s;
+    var blacklists = s.blacklists.trim();
+    if (/\n/.test(blacklists)) {
+      blacklists = blacklists.split("\n");
+    } else {
+      blacklists = [blacklists];
+    }
+    var docURL = stripUrl(document.URL);
+    for (var i = 0, l = blacklists.length; i < l; i++) {
+      if (stripUrl(blacklists[i]) === docURL) {
+        return false;
+      }
+    }
     var cssStyle = document.createElement("style");
     cssStyle.innerText = settings.cssVal;
     offset = parseInt(settings.offsetVal);
-    siteFunctions = [Sites.webm, Sites.imgur, Sites.gfycat, Sites.livememe, Sites.twitter, Sites.facebook, Sites.googleUserContent, Sites.google, Sites.wikimedia, Sites.xkcd, Sites.github, Sites.gravatar, Sites.normal, Sites.deviantart];
+    siteFunctions = [Sites.flickr, Sites.webm, Sites.imgur, Sites.gfycat, Sites.livememe, Sites.twitter, Sites.facebook, Sites.googleUserContent, Sites.google, Sites.wikimedia, Sites.xkcd, Sites.github, Sites.gravatar, Sites.normal, Sites.deviantart];
     document.getElementsByTagName("head")[0].appendChild(cssStyle);
     document.addEventListener("mousemove", onMouseMove, false);
     document.addEventListener("mouseover", onMouseOver, false);
+    document.addEventListener("keydown", onKeyDown, false);
+    document.addEventListener("keyup", onKeyUp, false);
   });
 });

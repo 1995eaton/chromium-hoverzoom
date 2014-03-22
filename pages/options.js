@@ -74,6 +74,25 @@ fetchSettings = function (callback) {
   });
 };
 
+var activeDescription;
+
+var mouseOver = function(e) {
+  if (!activeDescription && e.target.className === "help" && e.target.firstChild) {
+    if (e.target.firstElementChild.className === "description") {
+  console.log(e);
+      if (e.target.firstElementChild.style.display === "none") {
+        setTimeout(function() {
+          activeDescription = e.target.firstElementChild;
+        }, 550);
+        e.target.firstElementChild.style.display = "block";
+      }
+    }
+  } else if (activeDescription && e.target.className !== "help" && e.target.className !== "description") {
+    activeDescription.style.display = "none";
+    activeDescription = null;
+  }
+};
+
 editMode = function (e) {
   if (editor) {
     if (e.target.value === "Vim") {
@@ -96,6 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
     editor = CodeMirror.fromTextArea(document.getElementById("cssVal"), {lineNumbers: true});
   });
   document.addEventListener("mousedown", mouseDown, false);
+  document.addEventListener("mouseover", mouseOver, false);
   dropDown.addEventListener("change", editMode, false);
   save.addEventListener("mouseup", saveRelease, false);
   reset.addEventListener("mouseup", resetRelease, false);
