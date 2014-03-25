@@ -1,6 +1,8 @@
 var url, urlArray, Sites, imgurAlbum;
 Sites = {};
 
+// TODO: Compress the functions that use the urlArray variable into a single function
+
 imgurAlbum = {
 
   isAlbum: null,
