@@ -333,14 +333,16 @@ onKeyDown = function (e) {
         }
         break;
       default:
-        closeContainer();
+        if (!e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
+          closeContainer();
+        }
         break;
     }
   }
 };
 
 onKeyUp = function (e) {
-  if (e.which === 91) {
+  if (e.which === 90) {
     metaHeld = false;
     if (!freezeImage) {
       fadeContainer.Out();
@@ -362,11 +364,14 @@ onMouseUp = function (e) {
     closeContainer();
   }
 };
-
+var redetectImage = false;
 onMouseMove = function (e) {
   x = e.x; y = e.y;
   if (wheelC.x === x && wheelC.y === y) {
     return false;
+  } else if (redetectImage) {
+    redetectImage = false;
+    return detectImage(e.target);
   }
   if (imageFound) {
     if (dragImage) {
@@ -385,13 +390,23 @@ onMouseMove = function (e) {
   }
 };
 
+function detectImage(elem) {
+  if (!freezeImage && !metaHeld || elem.nodeName === "DIV" || elem.nodeName === "A" || elem.nodeName === "IMG") {
+    setTimeout(function() {
+      if (hoveredElement === elem) {
+        getUrlPath(elem);
+      }
+    }, parseFloat(settings.hoverVal) * 1000);
+    hoveredElement = elem;
+  }
+}
+
 var wheelC = {
   x: 0,
   y: 0
 };
 onMouseWheel = function (e) {
-  wheelC.x = x;
-  wheelC.y = y;
+  wheelC.x = x; wheelC.y = y;
   if (imgurAlbum.isAlbum && (settings.scrollAlbum || freezeImage)) {
     if (!freezeImage || (/hvzoom/.test(e.target.id) && freezeImage)) {
       e.preventDefault();
@@ -430,16 +445,14 @@ onMouseDown = function (e) {
 };
 
 onMouseOver = function (e) {
-  // if ((wheelC.x !== x && wheelC.y !== y) && !freezeImage && !metaHeld || e.nodeName === "DIV" || e.nodeName === "A" || e.nodeName === "IMG") { // TODO: make mousemove re-evaluate the mouse position after scrolling and show the image if it has changed
-  if (!freezeImage && !metaHeld || e.nodeName === "DIV" || e.nodeName === "A" || e.nodeName === "IMG") {
-    hoveredElement = e.target;
-    setTimeout(function () {
-      if (hoveredElement === e.target) {
-        getUrlPath(e.target);
-      }
-    }, parseFloat(settings.hoverVal) * 1000);
+  if (wheelC.x === x && wheelC.y === y) {
+    redetectImage = true;
+  } else {
+    if (!freezeImage && !metaHeld || e.nodeName === "DIV" || e.nodeName === "A" || e.nodeName === "IMG") {
+      detectImage(e.target);
+    }
+    ignoreHover = /hvzoom/.test(e.target.id);
   }
-  ignoreHover = /hvzoom/.test(e.target.id);
 };
 
 setupElements = function () {
