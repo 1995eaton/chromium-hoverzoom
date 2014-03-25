@@ -63,7 +63,6 @@ getImagePosY = function () {
 };
 
 adjustImageSize = function () {
-
   if (imageWidth > window.innerWidth - 2 * offset || imageHeight > window.innerHeight - 2 * offset) {
     if (imageWidth / window.innerWidth > imageHeight / window.innerHeight) {
       container.style.width = window.innerWidth - 3 * offset + "px";
@@ -79,6 +78,9 @@ adjustImageSize = function () {
   if (!freezeImage) {
     container.style.left = getImagePosX();
     container.style.top = getImagePosY();
+    if (link && !checkLinkHover()) {
+      return fadeContainer.Out();
+    }
   }
 
 };
@@ -102,6 +104,10 @@ appendImage = function (imageUrl, disableTimeout) {
   }
   var img = new Image();
   img.onload = function () {
+    if (!imgurAlbum.isAlbum && !freezeImage && !checkLinkHover()) {
+      imageFound = false;
+      return fadeContainer.Out();
+    }
     ce.style.cursor = "";
     container_img.src = imageUrl;
     imageHeight = img.height;
@@ -116,6 +122,7 @@ appendImage = function (imageUrl, disableTimeout) {
     }
     adjustImageSize();
     fadeContainer.In();
+    if (!checkLinkHover()) return hideContainer();
     if (settings.addHistory === "true") {
       if (currentElement.nodeName === "IMG") {
         chrome.runtime.sendMessage({action: "addHistory", url: currentElement.parentNode.href});
@@ -170,6 +177,13 @@ disableContainer = function() {
   document.removeEventListener("mouseup", onMouseUp, false);
   document.removeEventListener("mousewheel", onMouseWheel, false);
   container.removeEventListener("webkitTransitionEnd", transitionEnd, false);
+};
+
+checkLinkHover = function() {
+  if ((x < link.left || x > link.left + link.width || y < link.top || y > link.top + link.height) && !fadeContainer.fadingOut) {
+    return false;
+  }
+  return true;
 };
 
 fadeContainer = {
@@ -351,6 +365,9 @@ onMouseUp = function (e) {
 
 onMouseMove = function (e) {
   x = e.x; y = e.y;
+  if (wheelC.x === x && wheelC.y === y) {
+    return false;
+  }
   if (imageFound) {
     if (dragImage) {
       e.preventDefault();
@@ -358,18 +375,23 @@ onMouseMove = function (e) {
       container.style.top = document.body.scrollTop + e.y - dragY + "px";
     }
     if (link) {
-      if (!freezeImage && !metaHeld && (ignoreHover || currentElement != e.target)) {
+      if (!freezeImage && !metaHeld) {
         if ((x < link.left || x > link.left + link.width || y < link.top || y > link.top + link.height) && !fadeContainer.fadingOut) {
           imageFound = false;
           fadeContainer.Out();
         }
       }
-      currentElement = e.target;
     }
   }
 };
 
+var wheelC = {
+  x: 0,
+  y: 0
+};
 onMouseWheel = function (e) {
+  wheelC.x = x;
+  wheelC.y = y;
   if (imgurAlbum.isAlbum && (settings.scrollAlbum || freezeImage)) {
     if (!freezeImage || (/hvzoom/.test(e.target.id) && freezeImage)) {
       e.preventDefault();
@@ -379,7 +401,7 @@ onMouseWheel = function (e) {
         imgurAlbum.getImage(false);
       }
     }
-  } else {
+  } else if (!freezeImage) {
     fadeContainer.Out();
   }
 };
@@ -408,6 +430,7 @@ onMouseDown = function (e) {
 };
 
 onMouseOver = function (e) {
+  // if ((wheelC.x !== x && wheelC.y !== y) && !freezeImage && !metaHeld || e.nodeName === "DIV" || e.nodeName === "A" || e.nodeName === "IMG") { // TODO: make mousemove re-evaluate the mouse position after scrolling and show the image if it has changed
   if (!freezeImage && !metaHeld || e.nodeName === "DIV" || e.nodeName === "A" || e.nodeName === "IMG") {
     hoveredElement = e.target;
     setTimeout(function () {
