@@ -1,7 +1,9 @@
 #!/bin/sh
 
-if [[ ! -d distribution ]]; then mkdir distribution; fi
+if [[ -e release ]]; then
+  rm -r release*
+fi
 
-for i in `find . -maxdepth 1 | egrep -v "distribution|git|^\.$"`; do
-  cp -r $i distribution
-done
+mkdir release
+cp -r `find . -maxdepth 1 | egrep -v "^\.$|\.git|release"` release
+zip -r release.zip release
