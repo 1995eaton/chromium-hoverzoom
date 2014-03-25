@@ -213,19 +213,35 @@ Sites.facebook = function (elem, callback) {
 
 
 Sites.deviantart = function (elem, callback) {
-  var base = /deviantart\.(com|net)/i;
-  if (!base.test(document.URL))
-    return;
-
-  if (elem.nodeName === "DIV" && elem.style.backgroundImage)
-    url = elem.style.backgroundImage.replace(/url\(/i, "").replace(/\)$/i, "");
-  else
-    url = elem.src;
-
-  if (/\/fs([0-9]+)\/[a-zA-Z]\//.test(url))
-    callback(url);
-  else if (!/\/(avatars|emoticons)\//.test(url) && (base.test(stripUrl(url)) || basicMatch(url)))
-    callback((url.replace(/(\.(com|net)\/([^\/]+))\/([^\/]+)/g, "$1")));
+  urlArray = [];
+  if (elem.href) {
+    urlArray.push(elem.href);
+  }
+  if (elem.parentNode && elem.parentNode.href) {
+    urlArray.push(elem.parentNode.href);
+  }
+  if (urlArray.length === 0) {
+    return false;
+  }
+  for (var i = 0; i < urlArray.length; i++) {
+    url = urlArray[i];
+    if (!/deviantart\.(com|net)/i.test(url)) {
+      continue;
+    }
+    if (/\/fs([0-9]+)\/[a-zA-Z]\//.test(url)) {
+      callback(url);
+    } else if (/\/art\//i.test(url)) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "https://backend.deviantart.com/oembed?url=" + url);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          var parsed = JSON.parse(xhr.responseText);
+          return callback(parsed.url);
+        }
+      }
+      xhr.send();
+    }
+  }
 };
 
 Sites.googleUserContent = function (elem, callback) {
@@ -346,6 +362,33 @@ Sites.xkcd = function (elem, callback) {
   }
 };
 
+// oEmbed API version
+// Sites.flickr = function(elem, callback) {
+//   urlArray = [];
+//   if (elem.href) {
+//     urlArray.push(elem.href);
+//   }
+//   if (elem.parentNode && elem.parentNode.href) {
+//     urlArray.push(elem.parentNode.href);
+//   }
+//   if (urlArray.length === 0) {
+//     return false;
+//   }
+//   for (var i = 0; i < urlArray.length; i++) {
+//     url = urlArray[i];
+//     if (!/flickr\.com/i.test(stripUrl(url)) || !/\/([0-9]){10,11}(\/|$)/i.test(url)) {
+//       continue;
+//     }
+//     var xhr = new XMLHttpRequest();
+//     xhr.open("GET", "https://www.flickr.com/services/oembed/?format=json&url=" + url);
+//     xhr.onreadystatechange = function() {
+//       if (xhr.readyState === 4 && xhr.status === 200) {
+//         return callback(JSON.parse(xhr.responseText).url);
+//       }
+//     }
+//     xhr.send();
+//   }
+// };
 
 Sites.flickrApiPath = "https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=b5fcc857586ba650aa946ffee502daf2&format=json&photo_id=";
 Sites.flickr = function(elem, callback) {
