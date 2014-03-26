@@ -189,10 +189,11 @@ imageZoom.appendVideo = function(src, elem, poster) {
     this.image.src = "";
     this.videoSource.src = "";
   }
+  var currentElTemp = this.activeEl;
   this.main.style.transition = "opacity " + this.settings.fadeVal + "s ease-out";
   this.video.removeAttribute("controls");
   this.image.style.display = "none";
-  elem.style.cursor = "wait";
+  currentElTemp.style.cursor = "wait";
   this.video.poster = poster;
   this.videoSource.src = src;
   this.video.onloadedmetadata = function() {
@@ -201,7 +202,6 @@ imageZoom.appendVideo = function(src, elem, poster) {
     imageZoom.height = imageZoom.video.videoHeight;
     imageZoom.width  = imageZoom.video.videoWidth;
     imageZoom.adjustImage();
-    elem.style.cursor = "";
     if (!imageZoom.frozen) {
       imageZoom.main.style.transition = "opacity " + imageZoom.settings.fadeVal + "s ease-out";
     } else {
@@ -210,6 +210,7 @@ imageZoom.appendVideo = function(src, elem, poster) {
     imageZoom.isVideo = true;
     imageZoom.transition.in();
     setTimeout(function() {
+      currentElTemp.style.cursor = "";
       imageZoom.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + imageZoom.settings.fadeVal + "s ease-out";
     }, 25);
   };
@@ -404,7 +405,7 @@ onMouse = {
   ignore: false,
   move: function(e) {
     mouse.x = e.x; mouse.y = e.y;
-    if (mouse.wheelX === mouse.x && mouse.wheelY == mouse.y) {
+    if (mouse.wheelX === mouse.x && mouse.wheelY === mouse.y) {
       return false;
     }
     if (!imageZoom.frozen && imageZoom.redetectImage) {
@@ -436,7 +437,7 @@ onMouse = {
   },
   wheel: function(e) {
     mouse.wheelX = mouse.x; mouse.wheelY = mouse.y;
-    if (imgurAlbum.isAlbum && (imageZoom.settings.scrollAlbum || imageZoom.frozen)) {
+    if (imgurAlbum.isAlbum && (imageZoom.settings.scrollAlbum === "true" || imageZoom.frozen)) {
       if (!imageZoom.frozen || (/hvzoom/.test(e.target.id) && imageZoom.frozen)) {
         e.preventDefault();
         if (e.wheelDeltaY < 0) {
@@ -450,7 +451,9 @@ onMouse = {
     }
   },
   leave: function() {
-    imageZoom.transition.out();
+    if (!imageZoom.frozen) {
+      imageZoom.transition.out();
+    }
   },
   down: function(e) {
     if (mouse.drag) {
@@ -514,8 +517,6 @@ listeners = {
     document.removeEventListener("transitionend", transitionEnd, false);
   }
 };
-
-// SETUP
 
 function parseSettings(callback) {
   chrome.runtime.sendMessage({getSettings: true}, function(s) {
