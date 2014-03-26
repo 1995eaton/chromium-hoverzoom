@@ -37,10 +37,10 @@ imgurAlbum = {
     }
     this.id = id;
     this.isAlbum = true;
-    container_album_index.innerText = this.cached[id].index + 1 + "/" + this.cached[id].images.length;
-    container_caption.innerText = this.cached[this.id].captions[this.cached[this.id].index];
-    if (container_caption.innerText !== "") {
-      container_caption.style.display = "block";
+    imageZoom.albumIndex.innerText = this.cached[id].index + 1 + "/" + this.cached[id].images.length;
+    imageZoom.caption.innerText = this.cached[this.id].captions[this.cached[this.id].index];
+    if (imageZoom.caption.innerText !== "") {
+      imageZoom.caption.style.display = "block";
     }
     return this.cached[id].images[this.cached[id].index];
   },
@@ -54,19 +54,19 @@ imgurAlbum = {
       } else {
         this.cached[this.id].index = (index - 1 < 0) ? albumLength - 1 : index - 1;
       }
-      container_album_index.innerText = this.cached[this.id].index + 1 + "/" + albumLength;
+      imageZoom.albumIndex.innerText = this.cached[this.id].index + 1 + "/" + albumLength;
       var img = new Image();
       img.onload = function () {
-        currentElement.style.cursor = "";
+        imageZoom.activeEl.style.cursor = "";
         if (imgurAlbum.isAlbum) {
-          container_caption.innerText = imgurAlbum.cached[imgurAlbum.id].captions[imgurAlbum.cached[imgurAlbum.id].index];
-          container_caption.style.display = "block";
+          imageZoom.caption.innerText = imgurAlbum.cached[imgurAlbum.id].captions[imgurAlbum.cached[imgurAlbum.id].index];
+          imageZoom.caption.style.display = "block";
         }
-        if (container_caption.innerHTML === "") {
-          container_caption.innerHTML = "";
-          container_caption.style.display = "none";
+        if (imageZoom.caption.innerHTML === "") {
+          imageZoom.caption.innerHTML = "";
+          imageZoom.caption.style.display = "none";
         }
-        appendImage(img.src, true);
+        imageZoom.appendImage(img.src, true);
       }
       img.src = this.cached[this.id].images[this.cached[this.id].index];
     }

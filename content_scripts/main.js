@@ -1,493 +1,478 @@
-var container, container_img, container_close, container_caption, container_album_index, caption_height, x, y, currentElement, fadeContainer, fade_duration, adjustImageSize, appendImage, getUrlPath, offset, onMouseMove, onMouseWheel, onMouseOver, onKeyDown, showLoadingCursor, adjustmentInterval, adjustImageMonitor, containerActive, hideContainer, setupElements, setUpImage, tryMatch, siteFunctions, isVideo, imageFound, imageHeight, imageWidth, settings, ignoreHover, link, hoveredElement, metaHeld, shiftHeld, freezeImage, closeContainer, dragImage, dragX, dragY, metaHeld;
-var isDisabled = false;
-var isGoogleUrl = true;
+var imageZoom = {};
 var log = console.log.bind(console);
+isVideo = false;
 
+function initSites() {
+  imageZoom.sites = [
+    Sites.flickr,
+    Sites.webm,
+    Sites.imgur,
+    Sites.gfycat,
+    Sites.livememe,
+    Sites.twitter,
+    Sites.facebook,
+    Sites.googleUserContent,
+    Sites.google,
+    Sites.wikimedia,
+    Sites.xkcd,
+    Sites.github,
+    Sites.gravatar,
+    Sites.normal,
+    Sites.deviantart
+  ];
+}
 
-adjustmentInterval = 100;
+imageZoom.init = function() {
 
-getImagePosX = function () {
-  if (container.offsetWidth - 2 * offset >= window.innerWidth) {
-    if (x > window.innerWidth / 2) {
-      return document.body.scrollLeft + offset + "px";
+  this.main = document.createElement("div");
+  this.main.id = "hvzoom_img_container_main";
+
+  this.image = document.createElement("img");
+  this.image.id = "hvzoom_img_container_image";
+  this.main.appendChild(this.image);
+
+  this.close = document.createElement("div");
+  this.close.id = "hvzoom_img_close_icon";
+  this.close.innerText = "Close";
+  this.main.appendChild(this.close);
+
+  this.caption = document.createElement("div");
+  this.caption.id = "hvzoom_img_container_caption";
+  this.main.appendChild(this.caption);
+
+  this.albumIndex = document.createElement("div");
+  this.albumIndex.id = "hvzoom_img_album_index";
+  this.main.appendChild(this.albumIndex);
+
+  this.video = document.createElement("video");
+  this.video.id = "hvzoom_img_container_video";
+  this.video.autoplay = true;
+  this.video.loop = true;
+  
+  this.videoSource = document.createElement("source");
+  this.videoSource.id = "hvzoom_vid_src";
+  this.videoSource.type = "video/webm";
+
+  this.main.appendChild(this.video);
+
+  document.children[0].appendChild(this.main);
+
+};
+
+imageZoom.getImagePosX = function () {
+  if (this.main.offsetWidth - 2 * this.settings.offsetVal >= window.innerWidth) {
+    if (mouse.x > window.innerWidth / 2) {
+      return document.body.scrollLeft + this.settings.offsetVal + "px";
     } else {
-      return document.body.scrollLeft + window.innerWidth - 2 * offset - container.offsetWidth + "px";
+      return document.body.scrollLeft + window.innerWidth - 2 * this.settings.offsetVal - this.main.offsetWidth + "px";
     }
   } else {
-    if (x > window.innerWidth / 2) {
-      if (container.offsetWidth > x - 2 * offset) {
-        return document.body.scrollLeft + offset + "px";
+    if (mouse.x > window.innerWidth / 2) {
+      if (this.main.offsetWidth > mouse.x - 2 * this.settings.offsetVal) {
+        return document.body.scrollLeft + this.settings.offsetVal + "px";
       } else {
-        return document.body.scrollLeft + x - container.offsetWidth - offset + "px";
+        return document.body.scrollLeft + mouse.x - this.main.offsetWidth - this.settings.offsetVal + "px";
       }
     } else {
-      if (container.offsetWidth > window.innerWidth - x - 3 * offset) {
-        return document.body.scrollLeft + window.innerWidth - container.offsetWidth - 2 * offset + "px";
+      if (this.main.offsetWidth > window.innerWidth - mouse.x - 3 * this.settings.offsetVal) {
+        return document.body.scrollLeft + window.innerWidth - this.main.offsetWidth - 2 * this.settings.offsetVal + "px";
       } else {
-        return document.body.scrollLeft + x + offset + "px";
+        return document.body.scrollLeft + mouse.x + this.settings.offsetVal + "px";
       }
     }
   }
 };
 
-getImagePosY = function () {
-  if (container.offsetHeight - 2 * offset >= window.innerHeight) {
-    if (y > window.innerHeight / 2) {
-      return document.body.scrollTop + window.innerHeight - offset - container.offsetHeight + "px";
+imageZoom.getImagePosY = function () {
+  if (this.main.offsetHeight - 2 * this.settings.offsetVal >= window.innerHeight) {
+    if (mouse.y > window.innerHeight / 2) {
+      return document.body.scrollTop + window.innerHeight - this.settings.offsetVal - this.main.offsetHeight + "px";
     } else {
-      return document.body.scrollTop + offset + "px";
+      return document.body.scrollTop + this.settings.offsetVal + "px";
     }
   } else {
-    if (y > window.innerHeight / 2) {
-      if (container.offsetHeight / 2 > window.innerHeight - y - 2 * offset) {
-        if (container.offsetHeight + window.innerHeight - y + 2 * offset > window.innerHeight) {
-          return document.body.scrollTop + offset + "px";
+    if (mouse.y > window.innerHeight / 2) {
+      if (this.main.offsetHeight / 2 > window.innerHeight - mouse.y - 2 * this.settings.offsetVal) {
+        if (this.main.offsetHeight + window.innerHeight - mouse.y + 2 * this.settings.offsetVal > window.innerHeight) {
+          return document.body.scrollTop + this.settings.offsetVal + "px";
         } else {
-          return document.body.scrollTop + y - container.offsetHeight - offset + "px";
+          return document.body.scrollTop + mouse.y - this.main.offsetHeight - this.settings.offsetVal + "px";
         }
       } else {
-        return document.body.scrollTop + y - offset - container.offsetHeight / 2 + "px";
+        return document.body.scrollTop + mouse.y - this.settings.offsetVal - this.main.offsetHeight / 2 + "px";
       }
     } else {
-      if (container.offsetHeight / 2 > y - 2 * offset) {
-        if (container.offsetHeight + y + 2 * offset > window.innerHeight) {
-          return document.body.scrollTop + window.innerHeight - container.offsetHeight - offset + "px";
+      if (this.main.offsetHeight / 2 > mouse.y - 2 * this.settings.offsetVal) {
+        if (this.main.offsetHeight + mouse.y + 2 * this.settings.offsetVal > window.innerHeight) {
+          return document.body.scrollTop + window.innerHeight - this.main.offsetHeight - this.settings.offsetVal + "px";
         } else {
-          return document.body.scrollTop + y + offset + "px";
+          return document.body.scrollTop + mouse.y + this.settings.offsetVal + "px";
         }
       } else {
-        return document.body.scrollTop + y - offset - container.offsetHeight / 2 + "px";
+        return document.body.scrollTop + mouse.y - this.settings.offsetVal - this.main.offsetHeight / 2 + "px";
       }
     }
   }
 };
 
-adjustImageSize = function () {
-  if (imageWidth > window.innerWidth - 2 * offset || imageHeight > window.innerHeight - 2 * offset) {
-    if (imageWidth / window.innerWidth > imageHeight / window.innerHeight) {
-      container.style.width = window.innerWidth - 3 * offset + "px";
-      container.style.height = (window.innerWidth - 2 * offset) / imageWidth * imageHeight + "px";
+imageZoom.adjustImage = function () {
+  if (this.width > window.innerWidth - 2 * this.settings.offsetVal || this.height > window.innerHeight - 2 * this.settings.offsetVal) {
+    if (this.width / window.innerWidth > this.height / window.innerHeight) {
+      this.main.style.width = window.innerWidth - 3 * this.settings.offsetVal + "px";
+      this.main.style.height = (window.innerWidth - 2 * this.settings.offsetVal) / this.width * this.height + "px";
     } else {
-      container.style.height = window.innerHeight - 2 * offset + "px";
-      container.style.width = (window.innerHeight - 2 * offset) / imageHeight * imageWidth + "px";
+      this.main.style.height = window.innerHeight - 2 * this.settings.offsetVal + "px";
+      this.main.style.width = (window.innerHeight - 2 * this.settings.offsetVal) / this.height * this.width + "px";
     }
   } else {
-    container.style.width = imageWidth + "px";
-    container.style.height = imageHeight + "px";
+    this.main.style.width = this.width + "px";
+    this.main.style.height = this.height + "px";
   }
-  if (!freezeImage) {
-    container.style.left = getImagePosX();
-    container.style.top = getImagePosY();
-    if (link && !checkLinkHover()) {
-      return fadeContainer.Out();
+  if (!this.frozen) {
+    this.main.style.left = this.getImagePosX();
+    this.main.style.top = this.getImagePosY();
+    if (this.linkRect && !this.checkHoveredLink()) {
+      return this.transition.out();
     }
   }
 
 };
 
-appendImage = function (imageUrl, disableTimeout) {
-  var ce = currentElement;
-  ce.style.cursor = "wait";
-  container.style.display = "block";
-  container.style.transition = "opacity " + settings.fadeVal + "s ease-out";
-  document.addEventListener("mousewheel", onMouseWheel, false);
+imageZoom.startMonitor = function() {
+  var loop = setInterval(function() {
+    if (!imageZoom.transition.active) {
+      imageZoom.transition.out();
+    } else if (!imageZoom.transition.fadingOut && !imageZoom.frozen && !key.meta) {
+      imageZoom.adjustImage();
+    }
+    if (!imageZoom.active) {
+      clearInterval(loop);
+    }
+  }, 1000 / parseInt(imageZoom.settings.updateIntervalVal));
+}
+
+imageZoom.checkHoveredLink = function() {
+  return !((mouse.x < imageZoom.linkRect.left || mouse.x > imageZoom.linkRect.left + imageZoom.linkRect.width ||
+            mouse.y < imageZoom.linkRect.top  || mouse.y > imageZoom.linkRect.top  + imageZoom.linkRect.height) &&
+            !imageZoom.transition.fadingOut);
+};
+
+imageZoom.transition = {
+  in: function() {
+    this.fadingOut = false;
+    imageZoom.active = true;
+    imageZoom.startMonitor();
+    this.active = true;
+    imageZoom.main.style.opacity = "1";
+  },
+  out: function() {
+    imageZoom.active = false;
+    imageZoom.isVideo = false;
+    this.active = false;
+    imgurAlbum.isAlbum = false;
+    imageZoom.close.style.opacity = "0";
+    // listeners.disable(true);
+    this.fadingOut = true;
+    imageZoom.main.style.opacity = "0";
+  },
+  hide: function() {
+    imageZoom.main.style.display = "none";
+    onMouse.ignore = false;
+    this.active = false;
+    Sites.foundMatch = false;
+    imageZoom.active = false;
+    imageZoom.image.style.display = "none";
+    imageZoom.video.style.display = "none";
+  }
+};
+
+imageZoom.appendImage = function(src) {
+  var currentElTemp = this.activeEl;
+  currentElTemp.style.cursor = "wait";
+  this.main.style.display = "block";
+  this.main.style.transition = "opacity " + this.settings.fadeVal + "s ease-out";
   if (imgurAlbum.isAlbum) {
     if (imgurAlbum.cached[imgurAlbum.id].captions[imgurAlbum.cached[imgurAlbum.id].index] !== "") {
-      container_caption.style.display = "block";
+      this.caption.style.display = "block";
     } else {
-      container_caption.style.display = "none";
+      this.caption.style.display = "none";
     }
-    container_album_index.style.display = "block";
+    this.albumIndex.style.display = "block";
   } else {
-    container_caption.style.display = "none";
-    container_album_index.style.display = "none";
+    this.caption.style.display = "none";
+    this.albumIndex.style.display = "none";
   }
   var img = new Image();
-  img.onload = function () {
-    if (!imgurAlbum.isAlbum && !freezeImage && !checkLinkHover()) {
-      imageFound = false;
-      return fadeContainer.Out();
+  img.onload = function() {
+    if (!imgurAlbum.isAlbum && !imageZoom.frozen && !imageZoom.checkHoveredLink()) {
+      Sites.foundMatch = false;
+      return imageZoom.transition.hide();
     }
-    ce.style.cursor = "";
-    container_img.src = imageUrl;
-    imageHeight = img.height;
-    imageWidth = img.width;
-    container.style.display = "block";
-    container_img.style.display = "block";
-    container_vid.style.display = "none";
-    if (!freezeImage) {
-      container.style.transition = "opacity" + settings.fadeVal + "s ease-out";
+    currentElTemp.style.cursor = "";
+    imageZoom.image.src = src;
+    imageZoom.height = img.height;
+    imageZoom.width = img.width;
+    imageZoom.main.style.display = "block";
+    imageZoom.image.style.display = "block";
+    imageZoom.video.style.display = "none";
+    if (!imageZoom.frozen) {
+      imageZoom.main.style.transition = "opacity" + imageZoom.settings.fadeVal + "s ease-out";
     } else {
-      container.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + settings.fadeVal + "s ease-out";
+      imageZoom.main.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + imageZoom.settings.fadeVal + "s ease-out";
     }
-    adjustImageSize();
-    fadeContainer.In();
-    if (!checkLinkHover()) return hideContainer();
-    if (settings.addHistory === "true") {
-      if (currentElement.nodeName === "IMG") {
-        chrome.runtime.sendMessage({action: "addHistory", url: currentElement.parentNode.href});
+    imageZoom.adjustImage();
+    imageZoom.transition.in();
+    if (imageZoom.settings.addHistory === "true") {
+      if (imageZoom.activeEl.nodeName === "IMG") {
+        chrome.runtime.sendMessage({action: "addHistory", url: imageZoom.activeEl.parentNode.href});
       } else {
-        chrome.runtime.sendMessage({action: "addHistory", url: currentElement.href});
+        chrome.runtime.sendMessage({action: "addHistory", url: imageZoom.activeEl.href});
       }
     }
-    setTimeout(function () {
-      container.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + settings.fadeVal + "s ease-out";
+    setTimeout(function() {
+      imageZoom.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + imageZoom.settings.fadeVal + "s ease-out";
     }, 25);
-  }
-  img.src = imageUrl;
+  };
+  img.src = src;
 };
 
-adjustImageMonitor = function () {
-  var interval = setInterval(function () {
-    if (!fadeContainer.transition) {
-      hideContainer();
-    } else {
-      if (!fadeContainer.fadingOut) {
-        if (!freezeImage && !metaHeld) {
-          adjustImageSize();
-        }
-      }
+imageZoom.tryMatch = function(f, elem) {
+  f(elem, function(src, poster) {
+    if (!src) return false;
+    Sites.foundMatch = true;
+    imageZoom.linkRect = elem.getBoundingClientRect();
+    imageZoom.activeEl = elem;
+    if (!poster) {
+      return imageZoom.appendImage(src);
     }
-    if (!containerActive) {
-      clearInterval(interval);
-    }
-  }, 1000 / settings.updateIntervalVal);
-};
-
-hideContainer = function () {
-  container.style.display = "none";
-  container.style.opacity = "0";
-  fadeContainer.transition = false;
-  ignoreHover = false;
-  fadeContainer.fadingOut = false;
-  container_img.style.display = "none";
-  container_vid.style.display = "none";
-};
-
-transitionEnd = function(e) {
-  if (fadeContainer.fadingOut) {
-    fadeContainer.fadingOut = false;
-    fadeContainer.transition = false;
-    hideContainer();
-  }
-};
-
-disableContainer = function() {
-  document.removeEventListener("mousedown", onMouseDown, false);
-  document.removeEventListener("mouseup", onMouseUp, false);
-  document.removeEventListener("mousewheel", onMouseWheel, false);
-  container.removeEventListener("webkitTransitionEnd", transitionEnd, false);
-};
-
-checkLinkHover = function() {
-  if ((x < link.left || x > link.left + link.width || y < link.top || y > link.top + link.height) && !fadeContainer.fadingOut) {
-    return false;
-  }
-  return true;
-};
-
-fadeContainer = {
-
-  In: function () {
-    fadeContainer.fadingOut = false;
-    containerActive = true;
-    adjustImageMonitor();
-    fadeContainer.transition = true;
-    container.style.opacity = "1";
-  },
-
-  Out: function () {
-    containerActive = false;
-    isVideo = false;
-    imgurAlbum.isAlbum = false;
-    container_close.style.opacity = "0";
-    disableContainer();
-    fadeContainer.fadingOut = true;
-    container.style.opacity = "0";
-  }
-
-};
-
-appendVideo = function (video_url, elem, poster) {
-  if (container.style.display !== "block") {
-    container_img.src = "";
-    container_vid_src.src = "";
-  }
-  container.style.transition = "opacity " + settings.fadeVal + "s ease-out";
-  container_vid.removeAttribute("controls");
-  container_img.style.display = "none";
-  elem.style.cursor = "wait";
-  container.poster = poster;
-  container_vid_src.src = video_url;
-  container_vid.onloadedmetadata = function () {
-    container.style.display = "block";
-    container_vid.style.display = "block";
-    imageHeight = container_vid.videoHeight;
-    imageWidth = container_vid.videoWidth;
-    adjustImageSize();
-    elem.style.cursor = "";
-    if (!freezeImage) {
-      container.style.transition = "opacity" + settings.fadeVal + "s ease-out";
-    } else {
-      container.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + settings.fadeVal + "s ease-out";
-    }
-    isVideo = true;
-  }
-  fadeContainer.In();
-  setTimeout(function () {
-    container.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + settings.fadeVal + "s ease-out";
-  }, 25);
-  container_vid.load();
-  if (elem.href) {
-    chrome.runtime.sendMessage({ url: elem.href });
-  } else if (elem.parentNode.href) {
-    chrome.runtime.sendMessage({ url: elem.parentNode.href });
-  }
-};
-
-setUpImage = function (m, elem) {
-  currentElement = elem;
-  appendImage(m);
-};
-
-setUpVideo = function (m, elem, poster) {
-  currentElement = elem;
-  appendVideo(m, elem, poster);
-};
-
-tryMatch = function (func, elem) {
-  func(elem, function (src, poster) {
-    if (src) {
-      imageFound = true;
-      container.addEventListener("webkitTransitionEnd", transitionEnd, false);
-      document.addEventListener("mousedown", onMouseDown, false);
-      document.addEventListener("mouseup", onMouseUp, false);
-      link = elem.getBoundingClientRect();
-      Sites.foundMatch = true;
-      if (!poster) {
-        setUpImage(src, elem);
-      } else {
-        isVideo = true;
-        setUpVideo(src, elem, poster);
-      }
-    }
+    return imageZoom.appendVideo(src, elem, poster);
   });
 };
 
-getUrlPath = function (elem) {
-  if (basicMatch(document.URL))
-    return;
+imageZoom.testUrl = function(elem) {
+  if (basicMatch(document.URL)) {
+    return false;
+  }
   Sites.foundMatch = false;
-  for (var i = 0; i < siteFunctions.length; i++) {
+  for (var i = 0, l = imageZoom.sites.length; i < l; i++) {
     if (Sites.foundMatch) {
       break;
     }
-    tryMatch(siteFunctions[i], elem);
+    imageZoom.tryMatch(imageZoom.sites[i], elem);
   }
-};
+}
 
-onKeyDown = function (e) {
-  if (e.which === 90) {
-      isDisabled = !isDisabled;
-      if (isDisabled) {
-        document.removeEventListener("mouseover", onMouseOver, false);
-        document.removeEventListener("mousemove", onMouseMove, false);
-        if (containerActive) {
-          closeContainer();
-          fadeContainer.Out();
-        }
-      } else {
-        document.addEventListener("mouseover", onMouseOver, false);
-        document.addEventListener("mousemove", onMouseMove, false);
-      }
-  } else if (containerActive) {
-    switch (e.which) {
-      case 39:
-        if (imgurAlbum.isAlbum)
-          imgurAlbum.getImage(true);
-        break;
-      case 37:
-        if (imgurAlbum.isAlbum)
-          imgurAlbum.getImage(false);
-        break;
-      case 67:
-        if (imgurAlbum.isAlbum)
-          container_caption.style.display = (container_caption.style.display === "block") ? "none" : "block";
-        break;
-      case 91:
-        metaHeld = true;
-        container.style.pointerEvents = "auto";
-        break;
-      case 32:
-        if (isVideo) {
-          e.preventDefault();
-          if (container_vid.paused)
-            container_vid.play();
-          else
-            container_vid.pause();
-        }
-        break;
-      case 65:
-        if (containerActive && container_img.src) {
-          chrome.runtime.sendMessage({action: "openLink", url: container_img.src});
-        }
-        break;
-      default:
-        if (!e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
-          closeContainer();
-        }
-        break;
-    }
-  }
-};
-
-onKeyUp = function (e) {
-  if (e.which === 90) {
-    metaHeld = false;
-    if (!freezeImage) {
-      fadeContainer.Out();
-    }
-  }
-};
-
-closeContainer = function () {
-  freezeImage = false;
-  dragImage = false;
-  metaHeld = false;
-  container.style.pointerEvents = "none";
-  fadeContainer.Out();
-};
-
-onMouseUp = function (e) {
-  dragImage = false;
-  if (e.target === container_close) {
-    closeContainer();
-  }
-};
-var redetectImage = false;
-onMouseMove = function (e) {
-  x = e.x; y = e.y;
-  if (wheelC.x === x && wheelC.y === y) {
-    return false;
-  } else if (redetectImage) {
-    redetectImage = false;
-    return detectImage(e.target);
-  }
-  if (imageFound) {
-    if (dragImage) {
-      e.preventDefault();
-      container.style.left = document.body.scrollLeft + e.x - dragX + "px";
-      container.style.top = document.body.scrollTop + e.y - dragY + "px";
-    }
-    if (link) {
-      if (!freezeImage && !metaHeld) {
-        if ((x < link.left || x > link.left + link.width || y < link.top || y > link.top + link.height) && !fadeContainer.fadingOut) {
-          imageFound = false;
-          fadeContainer.Out();
-        }
-      }
-    }
-  }
-};
-
-function detectImage(elem) {
-  if (!freezeImage && !metaHeld || elem.nodeName === "DIV" || elem.nodeName === "A" || elem.nodeName === "IMG") {
+imageZoom.detectImage = function(elem) {
+  if (!imageZoom.frozen && !key.meta || /DIV|A|IMG/.test(elem.nodeName)) {
     setTimeout(function() {
-      if (hoveredElement === elem) {
-        getUrlPath(elem);
+      if (mouse.hoverEl === elem) {
+        imageZoom.testUrl(elem);
       }
-    }, parseFloat(settings.hoverVal) * 1000);
-    hoveredElement = elem;
+    }, parseFloat(imageZoom.settings.hoverVal) * 1000);
+    mouse.hoverEl = elem;
   }
+};
+
+imageZoom.closeContainer = function() {
+  imageZoom.frozen = false;
+  mouse.drag = false;
+  mouse.meta = false;
+  imageZoom.main.style.pointerEvents = "none";
+  imageZoom.transition.out();
+};
+
+var onKey = {
+  down: function(e) {
+    if (e.which === 90) {
+        imageZoom.disabled = !imageZoom.disabled;
+        if (imageZoom.disabled) {
+          document.removeEventListener("mouseover", onMouse.over, false);
+          document.removeEventListener("mousemove", onMouse.move, false);
+          if (imageZoom.active) {
+            imageZoom.closeContainer();
+            // fadeContainer.Out();
+          }
+        } else {
+          document.addEventListener("mouseover", onMouse.over, false);
+          document.addEventListener("mousemove", onMouse.move, false);
+        }
+    } else if (imageZoom.active) {
+      switch (e.which) {
+        case 39:
+          if (imgurAlbum.isAlbum)
+            imgurAlbum.getImage(true);
+          break;
+        case 37:
+          if (imgurAlbum.isAlbum)
+            imgurAlbum.getImage(false);
+          break;
+        case 67:
+          if (imgurAlbum.isAlbum)
+            imageZoom.caption.style.display = (imageZoom.caption.style.display === "block") ? "none" : "block";
+          break;
+        case 91:
+          key.meta = true;
+          imageZoom.main.style.pointerEvents = "auto";
+          break;
+        case 32:
+          if (isVideo) {
+            e.preventDefault();
+            if (imageZoom.video.paused)
+              imageZoom.video.play();
+            else
+              imageZoom.video.pause();
+          }
+          break;
+        case 65:
+          if (imageZoom.active && imageZoom.image.src) {
+            chrome.runtime.sendMessage({action: "openLink", url: imageZoom.image.src});
+          }
+          break;
+        default:
+          if (!e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
+            imageZoom.closeContainer();
+
+          }
+          break;
+      }
+    }
+  },
+  up: function(e) {
+    if (e.which === 91) {
+      key.meta = false;
+      if (!imageZoom.frozen) {
+        imageZoom.transition.out();
+      }
+    }
+  }
+};
+
+key = {
+  meta: false
+};
+
+mouse = {
+  x: null,
+  y: null,
+  dragX: null,
+  dragY: null,
+  wheelX: null,
+  wheelY: null,
+  hoverEl: null
 }
 
-var wheelC = {
-  x: 0,
-  y: 0
+transitionEnd = function(e) {
+  if (imageZoom.transition.fadingOut) {
+    imageZoom.transition.fadingOut = false;
+    imageZoom.transition.active = false;
+    imageZoom.transition.hide();
+  }
 };
-onMouseWheel = function (e) {
-  wheelC.x = x; wheelC.y = y;
-  if (imgurAlbum.isAlbum && (settings.scrollAlbum || freezeImage)) {
-    if (!freezeImage || (/hvzoom/.test(e.target.id) && freezeImage)) {
-      e.preventDefault();
-      if (e.wheelDeltaY < 0) {
-        imgurAlbum.getImage(true);
-      } else {
-        imgurAlbum.getImage(false);
+
+var onMouse = {
+  ignore: false,
+  move: function(e) {
+    mouse.x = e.x; mouse.y = e.y;
+    if (mouse.wheelX === mouse.x && mouse.wheelY == mouse.y) {
+      return false;
+    }
+    if (!imageZoom.frozen && imageZoom.redetectImage) {
+      imageZoom.redetectImage = false;
+      return imageZoom.detectImage(e.target);
+    }
+    if (imageZoom.active) {
+      if (mouse.drag) {
+        e.preventDefault();
+        imageZoom.main.style.left = document.body.scrollLeft + mouse.x - mouse.dragX + "px";
+        imageZoom.main.style.top  = document.body.scrollTop  + mouse.y - mouse.dragY + "px";
+      }
+      if (imageZoom.linkRect && !imageZoom.frozen && !key.meta) {
+        if (!imageZoom.checkHoveredLink()) {
+          Sites.foundMatch = false;
+          imageZoom.transition.out();
+        }
       }
     }
-  } else if (!freezeImage) {
-    fadeContainer.Out();
-  }
-};
-
-onMouseDown = function (e) {
-  if (dragImage) {
-    dragImage = false;
-  }
-  if (e.target === container_img || e.target === container_vid) {
-    if (isVideo) {
-      container_vid.setAttribute("controls", "controls");
+  },
+  over: function(e) {
+    if (mouse.wheelX === mouse.x && mouse.wheelY === mouse.y) {
+      return imageZoom.redetectImage = true;
     }
-    if (freezeImage) {
-      if ((isVideo && e.pageY < container.offsetHeight + container.offsetTop - 40) || !isVideo) {
-        container.style.transition = "opacity " + settings.fadeVal + "s ease-out";
-        dragImage = true;
+    if (!imageZoom.frozen && !key.meta && /DIV|A|IMG/.test(e.target.nodeName)) {
+      imageZoom.detectImage(e.target);
+    }
+    imageZoom.ignore = /hvzoom/.test(e.target.id);
+  },
+  wheel: function(e) {
+    mouse.wheelX = mouse.x; mouse.wheelY = mouse.y;
+    if (imgurAlbum.isAlbum && (imageZoom.settings.scrollAlbum || imageZoom.frozen)) {
+      if (!imageZoom.frozen || (/hvzoom/.test(e.target.id) && imageZoom.frozen)) {
+        e.preventDefault();
+        if (e.wheelDeltaY < 0) {
+          imgurAlbum.getImage(true);
+        } else {
+          imgurAlbum.getImage(false);
+        }
       }
-      dragX = document.body.scrollLeft + e.x - container.offsetLeft;
-      dragY = document.body.scrollTop + e.y - container.offsetTop;
-    } else if (metaHeld) {
-      container_close.style.opacity = "1";
-      freezeImage = true;
-      metaHeld = false;
+    } else if (!imageZoom.frozen) {
+      imageZoom.transition.out();
+    }
+  },
+  down: function(e) {
+    if (mouse.drag) {
+      mouse.drag = false;
+    }
+    if (e.target === imageZoom.image || e.target === imageZoom.video) {
+      if (isVideo) {
+        imageZoom.video.setAttribute("controls", "controls");
+      }
+      if (imageZoom.frozen) {
+        if ((isVideo && e.pageY < imageZoom.main.offsetHeight + imageZoom.main.offsetTop - 40) || !isVideo) {
+          imageZoom.main.style.transition = "opacity " + imageZoom.settings.fadeVal + "s ease-out";
+          mouse.drag = true;
+        }
+        mouse.dragX = document.body.scrollLeft + e.x - imageZoom.main.offsetLeft;
+        mouse.dragY = document.body.scrollTop  + e.y - imageZoom.main.offsetTop;
+      } else if (key.meta) {
+        imageZoom.close.style.opacity = "1";
+        imageZoom.frozen = true;
+        key.meta = false;
+      }
+    }
+  },
+  up: function(e) {
+    mouse.drag = false;
+    if (e.target === imageZoom.close) {
+      imageZoom.closeContainer();
     }
   }
 };
 
-onMouseOver = function (e) {
-  if (wheelC.x === x && wheelC.y === y) {
-    redetectImage = true;
-  } else {
-    if (!freezeImage && !metaHeld || e.nodeName === "DIV" || e.nodeName === "A" || e.nodeName === "IMG") {
-      detectImage(e.target);
-    }
-    ignoreHover = /hvzoom/.test(e.target.id);
+var listeners = {
+  enable: function() {
+    document.addEventListener("keydown", onKey.down, false);
+    document.addEventListener("keyup", onKey.up, false);
+    document.addEventListener("mousemove", onMouse.move, false);
+    document.addEventListener("mousedown", onMouse.down, false);
+    document.addEventListener("mouseup", onMouse.up, false);
+    document.addEventListener("mouseover", onMouse.over, false);
+    document.addEventListener("mousewheel", onMouse.wheel, false);
+    document.addEventListener("transitionend", transitionEnd, false);
+  },
+  disable: function() {
+    document.removeEventListener("keydown", onKey.down, false);
+    document.removeEventListener("keyup", onKey.up, false);
+    document.removeEventListener("mousemove", onMouse.move, false);
+    document.removeEventListener("mouseover", onMouse.over, false);
+    document.removeEventListener("mousewheel", onMouse.wheel, false);
+    document.removeEventListener("transitionend", transitionEnd, false);
   }
 };
 
-setupElements = function () {
-  container = document.createElement("div");
-  container.id = "hvzoom_img_container_main";
-  document.children[0].appendChild(container);
-  container_img = document.createElement("img");
-  container_img.id = "hvzoom_img_container_image";
-  container.appendChild(container_img);
-  container_close = document.createElement("div");
-  container_close.id = "hvzoom_img_close_icon";
-  container_close.innerText = "Close";
-  container.appendChild(container_close);
-  container_caption = document.createElement("div");
-  container_caption.id = "hvzoom_img_container_caption";
-  container.appendChild(container_caption);
-  container_album_index = document.createElement("div");
-  container_album_index.id = "hvzoom_img_album_index";
-  container.appendChild(container_album_index);
-  container_vid = document.createElement("video");
-  container_vid.autoplay = true;
-  container_vid.loop = true;
-  container_vid.muted = "muted";
-  container_vid.id = "hvzoom_img_container_video";
-  container_vid_src = document.createElement("source");
-  container_vid_src.id = "hvzoom_vid_src";
-  container_vid_src.type = "video/webm";
-  container.appendChild(container_vid);
-  container_vid.appendChild(container_vid_src);
-}
+// SETUP
 
-document.addEventListener("DOMContentLoaded", function() {
-  setupElements();
-  chrome.runtime.sendMessage({getSettings: true}, function (s) {
-    settings = s;
+function parseSettings(callback) {
+  chrome.runtime.sendMessage({getSettings: true}, function(s) {
     var blacklists = s.blacklists.trim();
     if (/\n/.test(blacklists)) {
       blacklists = blacklists.split("\n");
@@ -497,17 +482,62 @@ document.addEventListener("DOMContentLoaded", function() {
     var docURL = stripUrl(document.URL);
     for (var i = 0, l = blacklists.length; i < l; i++) {
       if (stripUrl(blacklists[i]) === docURL) {
-        return false;
+        callback(false);
       }
     }
-    var cssStyle = document.createElement("style");
-    cssStyle.innerText = settings.cssVal;
-    offset = parseInt(settings.offsetVal);
-    siteFunctions = [Sites.flickr, Sites.webm, Sites.imgur, Sites.gfycat, Sites.livememe, Sites.twitter, Sites.facebook, Sites.googleUserContent, Sites.google, Sites.wikimedia, Sites.xkcd, Sites.github, Sites.gravatar, Sites.normal, Sites.deviantart];
-    document.getElementsByTagName("head")[0].appendChild(cssStyle);
-    document.addEventListener("mousemove", onMouseMove, false);
-    document.addEventListener("mouseover", onMouseOver, false);
-    document.addEventListener("keydown", onKeyDown, false);
-    document.addEventListener("keyup", onKeyUp, false);
+    callback(s);
   });
+}
+
+function parseBlacklists(list) {
+  list = list.trim();
+  if (/\n/.test(list)) {
+    list = list.split("\n");
+  } else {
+    list = [];
+  }
+  var domain = stripUrl(document.URL);
+  for (var i = 0, l = list.length; i < l; i++) {
+    if (stripUrl(list[i]) === domain) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function addCustomStylesheet(css) {
+  var style = document.createElement("style");
+  style.innerText = css;
+  if (document.getElementsByTagName("head").length === 0) {
+    if (document.getElementsByTagName("body").length === 0) {
+      return false;
+    }
+    document.body.appendChild(style);
+  } else {
+    document.getElementsByTagName("head")[0].appendChild(style);
+  }
+  return true;
+}
+
+function setup() {
+  imageZoom.init();
+  var b = parseBlacklists(imageZoom.settings.blacklists);
+  if (!b) return false;
+  var s = addCustomStylesheet(imageZoom.settings.cssVal);
+  if (!s) return false;
+  imageZoom.settings.offsetVal = parseInt(imageZoom.settings.offsetVal)
+  initSites();
+  listeners.enable();
+}
+
+parseSettings(function(s) {
+  if (s && typeof s === "object") {
+    imageZoom.settings = s;
+    if (document.readyState === "complete" || document.readyState === "interactive") {
+      return setup();
+    }
+    document.addEventListener("DOMContentLoaded", function() {
+      setup();
+    }, false);
+  }
 });
