@@ -1,18 +1,16 @@
 var imageZoom = {};
+var onKey, key, mouse, transitionEnd, onMouse, listeners;
 var log = console.log.bind(console);
-isVideo = false;
 
 function initSites() {
   imageZoom.sites = [
     Sites.flickr,
-    Sites.webm,
     Sites.imgur,
     Sites.gfycat,
     Sites.livememe,
     Sites.twitter,
     Sites.facebook,
     Sites.googleUserContent,
-    Sites.google,
     Sites.wikimedia,
     Sites.xkcd,
     Sites.github,
@@ -52,6 +50,7 @@ imageZoom.init = function() {
   this.videoSource = document.createElement("source");
   this.videoSource.id = "hvzoom_vid_src";
   this.videoSource.type = "video/webm";
+  this.video.appendChild(this.videoSource);
 
   this.main.appendChild(this.video);
 
@@ -171,7 +170,6 @@ imageZoom.transition = {
     this.active = false;
     imgurAlbum.isAlbum = false;
     imageZoom.close.style.opacity = "0";
-    // listeners.disable(true);
     this.fadingOut = true;
     imageZoom.main.style.opacity = "0";
   },
@@ -184,6 +182,39 @@ imageZoom.transition = {
     imageZoom.image.style.display = "none";
     imageZoom.video.style.display = "none";
   }
+};
+
+imageZoom.appendVideo = function(src, elem, poster) {
+  if (this.main.style.display !== "block") {
+    this.image.src = "";
+    this.videoSource.src = "";
+  }
+  this.main.style.transition = "opacity " + this.settings.fadeVal + "s ease-out";
+  this.video.removeAttribute("controls");
+  this.image.style.display = "none";
+  elem.style.cursor = "wait";
+  this.video.poster = poster;
+  this.videoSource.src = src;
+  this.video.onloadedmetadata = function() {
+    imageZoom.main.style.display = "block";
+    imageZoom.video.style.display = "block";
+    imageZoom.height = imageZoom.video.videoHeight;
+    imageZoom.width  = imageZoom.video.videoWidth;
+    imageZoom.adjustImage();
+    elem.style.cursor = "";
+    if (!imageZoom.frozen) {
+      imageZoom.main.style.transition = "opacity " + imageZoom.settings.fadeVal + "s ease-out";
+    } else {
+      imageZoom.main.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + imageZoom.settings.fadeVal + "s ease-out";
+    }
+    imageZoom.isVideo = true;
+    imageZoom.transition.in();
+    setTimeout(function() {
+      imageZoom.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + imageZoom.settings.fadeVal + "s ease-out";
+    }, 25);
+  };
+  this.video.load();
+  chrome.runtime.sendMessage({url: elem.href || elem.parentNode.href});
 };
 
 imageZoom.appendImage = function(src) {
@@ -237,6 +268,7 @@ imageZoom.appendImage = function(src) {
 };
 
 imageZoom.tryMatch = function(f, elem) {
+  urlArray = [];
   f(elem, function(src, poster) {
     if (!src) return false;
     Sites.foundMatch = true;
@@ -263,38 +295,33 @@ imageZoom.testUrl = function(elem) {
 }
 
 imageZoom.detectImage = function(elem) {
-  if (!imageZoom.frozen && !key.meta || /DIV|A|IMG/.test(elem.nodeName)) {
+  if (!this.frozen && !key.meta || /DIV|A|IMG/.test(elem.nodeName)) {
     setTimeout(function() {
       if (mouse.hoverEl === elem) {
         imageZoom.testUrl(elem);
       }
-    }, parseFloat(imageZoom.settings.hoverVal) * 1000);
+    }, parseFloat(this.settings.hoverVal) * 1000);
     mouse.hoverEl = elem;
   }
 };
 
 imageZoom.closeContainer = function() {
-  imageZoom.frozen = false;
+  this.frozen = false;
   mouse.drag = false;
   mouse.meta = false;
-  imageZoom.main.style.pointerEvents = "none";
-  imageZoom.transition.out();
+  this.main.style.pointerEvents = "none";
+  this.transition.out();
 };
 
-var onKey = {
+onKey = {
   down: function(e) {
     if (e.which === 90) {
         imageZoom.disabled = !imageZoom.disabled;
         if (imageZoom.disabled) {
-          document.removeEventListener("mouseover", onMouse.over, false);
-          document.removeEventListener("mousemove", onMouse.move, false);
-          if (imageZoom.active) {
-            imageZoom.closeContainer();
-            // fadeContainer.Out();
-          }
+          listeners.disable(false, true);
+          imageZoom.transition.out();
         } else {
-          document.addEventListener("mouseover", onMouse.over, false);
-          document.addEventListener("mousemove", onMouse.move, false);
+          listeners.enable(false, true);
         }
     } else if (imageZoom.active) {
       switch (e.which) {
@@ -315,7 +342,7 @@ var onKey = {
           imageZoom.main.style.pointerEvents = "auto";
           break;
         case 32:
-          if (isVideo) {
+          if (imageZoom.isVideo) {
             e.preventDefault();
             if (imageZoom.video.paused)
               imageZoom.video.play();
@@ -324,8 +351,12 @@ var onKey = {
           }
           break;
         case 65:
-          if (imageZoom.active && imageZoom.image.src) {
+          if (imageZoom.active && !imageZoom.isVideo && imageZoom.image.src) {
             chrome.runtime.sendMessage({action: "openLink", url: imageZoom.image.src});
+            imageZoom.transition.hide();
+          } else if (imageZoom.active && imageZoom.isVideo && imageZoom.videoSource.src) {
+            chrome.runtime.sendMessage({action: "openLink", url: imageZoom.videoSource.src});
+            imageZoom.transition.hide();
           }
           break;
         default:
@@ -369,7 +400,7 @@ transitionEnd = function(e) {
   }
 };
 
-var onMouse = {
+onMouse = {
   ignore: false,
   move: function(e) {
     mouse.x = e.x; mouse.y = e.y;
@@ -423,11 +454,11 @@ var onMouse = {
       mouse.drag = false;
     }
     if (e.target === imageZoom.image || e.target === imageZoom.video) {
-      if (isVideo) {
+      if (imageZoom.isVideo) {
         imageZoom.video.setAttribute("controls", "controls");
       }
       if (imageZoom.frozen) {
-        if ((isVideo && e.pageY < imageZoom.main.offsetHeight + imageZoom.main.offsetTop - 40) || !isVideo) {
+        if ((imageZoom.isVideo && e.pageY < imageZoom.main.offsetHeight + imageZoom.main.offsetTop - 40) || !imageZoom.isVideo) {
           imageZoom.main.style.transition = "opacity " + imageZoom.settings.fadeVal + "s ease-out";
           mouse.drag = true;
         }
@@ -448,23 +479,33 @@ var onMouse = {
   }
 };
 
-var listeners = {
-  enable: function() {
-    document.addEventListener("keydown", onKey.down, false);
-    document.addEventListener("keyup", onKey.up, false);
-    document.addEventListener("mousemove", onMouse.move, false);
-    document.addEventListener("mousedown", onMouse.down, false);
-    document.addEventListener("mouseup", onMouse.up, false);
-    document.addEventListener("mouseover", onMouse.over, false);
-    document.addEventListener("mousewheel", onMouse.wheel, false);
+listeners = {
+  enable: function(keyOnly, mouseOnly) {
+    if (keyOnly) {
+      document.addEventListener("keydown", onKey.down, false);
+      document.addEventListener("keyup", onKey.up, false);
+    }
+    if (mouseOnly) {
+      document.addEventListener("mousemove", onMouse.move, false);
+      document.addEventListener("mousedown", onMouse.down, false);
+      document.addEventListener("mouseup", onMouse.up, false);
+      document.addEventListener("mouseover", onMouse.over, false);
+      document.addEventListener("mousewheel", onMouse.wheel, false);
+    }
     document.addEventListener("transitionend", transitionEnd, false);
   },
-  disable: function() {
-    document.removeEventListener("keydown", onKey.down, false);
-    document.removeEventListener("keyup", onKey.up, false);
-    document.removeEventListener("mousemove", onMouse.move, false);
-    document.removeEventListener("mouseover", onMouse.over, false);
-    document.removeEventListener("mousewheel", onMouse.wheel, false);
+  disable: function(keyOnly, mouseOnly) {
+    if (keyOnly) {
+      document.removeEventListener("keydown", onKey.down, false);
+      document.removeEventListener("keyup", onKey.up, false);
+    }
+    if (mouseOnly) {
+      document.removeEventListener("mousemove", onMouse.move, false);
+      document.removeEventListener("mouseover", onMouse.over, false);
+      document.removeEventListener("mousedown", onMouse.down, false);
+      document.removeEventListener("mouseup", onMouse.up, false);
+      document.removeEventListener("mousewheel", onMouse.wheel, false);
+    }
     document.removeEventListener("transitionend", transitionEnd, false);
   }
 };
@@ -527,7 +568,7 @@ function setup() {
   if (!s) return false;
   imageZoom.settings.offsetVal = parseInt(imageZoom.settings.offsetVal)
   initSites();
-  listeners.enable();
+  listeners.enable(true, true);
 }
 
 parseSettings(function(s) {

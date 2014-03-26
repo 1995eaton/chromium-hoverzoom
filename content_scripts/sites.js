@@ -1,7 +1,7 @@
-var url, urlArray, Sites, imgurAlbum;
-Sites = {};
+var Sites, imgurAlbum, basicMatch, stripUrl, getUrls;
+var urlArray = [];
 
-// TODO: Compress the functions that use the urlArray variable into a single function
+Sites = {};
 
 imgurAlbum = {
 
@@ -20,20 +20,25 @@ imgurAlbum = {
 
   getAlbum: function (id) {
     if (!imgurAlbum.cached[id]) {
-      var x = new XMLHttpRequest();
-      x.open("GET", "https://api.imgur.com/2/album/" + id.replace(/#.*/, "") + ".json", false);
-      x.onreadystatechange = function() {
-        var images = JSON.parse(x.responseText).album.images;
-        imgurAlbum.cached[id] = {};
-        imgurAlbum.cached[id].index = 0;
-        imgurAlbum.cached[id].images = [];
-        imgurAlbum.cached[id].captions = [];
-        for (var i = 0; i < images.length; i++) {
-          imgurAlbum.cached[id].images.push(images[i].links.original);
-          imgurAlbum.cached[id].captions.push(images[i].image.caption);
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "https://api.imgur.com/2/album/" + id.replace(/#.*/, "") + ".json", false);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          var images = JSON.parse(xhr.responseText).album.images;
+          imgurAlbum.cached[id] = {};
+          imgurAlbum.cached[id].index = 0;
+          imgurAlbum.cached[id].images = [];
+          imgurAlbum.cached[id].captions = [];
+          for (var i = 0; i < images.length; i++) {
+            imgurAlbum.cached[id].images.push(images[i].links.original);
+            imgurAlbum.cached[id].captions.push(images[i].image.caption);
+          }
         }
       };
-      x.send();
+      xhr.send();
+    }
+    if (!this.cached[id]) {
+      return false;
     }
     this.id = id;
     this.isAlbum = true;
@@ -74,11 +79,11 @@ imgurAlbum = {
 
 };
 
-var basicMatch = function (url) {
+basicMatch = function (url) {
   return (/\.(png|jpeg|jpg|svg|gif|tif)((:large|((\\?[^?])+))$)?/i).test(url);
 };
 
-var stripUrl = function (url) {
+stripUrl = function (url) {
   if (!url) {
     return;
   }
@@ -88,8 +93,20 @@ var stripUrl = function (url) {
   return url;
 };
 
+getUrls = function(elems) {
+  if (urlArray.length) {
+    return urlArray;
+  }
+  for (var i = 0, l = elems.length; i < l; i++) {
+    if (elems[i] && elems[i].href) {
+      urlArray.push(elems[i].href);
+    }
+  }
+  return urlArray;
+};
+
 Sites.github = function (elem, callback) {
-  url = elem.src;
+  var url = elem.src;
   if (!url || !/avatars/.test(url) || !/githubusercontent\.com/.test(stripUrl(url))) {
     return;
   }
@@ -97,7 +114,7 @@ Sites.github = function (elem, callback) {
 };
 
 Sites.gravatar = function (elem, callback) {
-  url = elem.src;
+  var url = elem.src;
   if (!url || !/gravatar\.com/.test(stripUrl(url)) || !basicMatch(url)) {
     return;
   }
@@ -142,44 +159,31 @@ Sites.livememe = function (elem, callback) {
 
 
 Sites.imgur = function (elem, callback) {
-  urlArray = [];
-  if (elem.href) {
-    urlArray.push(elem.href);
-  }
-  if (elem.parentNode && elem.parentNode.href) {
-    urlArray.push(elem.parentNode.href);
-  }
-  if (urlArray.length === 0) {
-    return false;
-  }
-
-  for (var i = 0; i < urlArray.length; i++) {
-    url = urlArray[i];
-    if (/\/random/.test(url) || !/imgur\.com/i.test(stripUrl(url))) {
-      continue;
+  getUrls([elem, elem.parentNode]).forEach(function(url) {
+    if (!/\/random/.test(url) && /imgur\.com/i.test(stripUrl(url))) {
+      imgurAlbum.isAlbum = false;
+      if (basicMatch(url)) {
+        return callback(url);
+      }
+      if (/\/a\//.test(url)) {
+        return callback(imgurAlbum.getAlbum(url.replace(/.*\/a\//, "")));
+      }
+      if (/\/gallery\/(([a-zA-Z0-9]){7})/.test(url)) {
+        return callback(url.replace('/gallery/', '/') + ".jpg");
+      }
+      if (/\/gallery\//.test(url)) {
+        return callback(imgurAlbum.getAlbum(url.replace(/.*gallery/, "")));
+      }
+      var suffix = url.replace(new RegExp(".*" + stripUrl(url) + "(\/)?", "i"), "");
+      if (suffix.length === 7) {
+        return callback(url + ".jpg");
+      }
     }
-    imgurAlbum.isAlbum = false;
-    if (basicMatch(url)) {
-      return callback(url);
-    }
-    if (/\/a\//.test(url)) {
-      return callback(imgurAlbum.getAlbum(url.replace(/.*\/a\//, "")));
-    }
-    if (/\/gallery\/(([a-zA-Z0-9]){7})/.test(url)) {
-      return callback(url.replace('/gallery/', '/') + ".jpg");
-    }
-    if (/\/gallery\//.test(url)) {
-      return callback(imgurAlbum.getAlbum(url.replace(/.*gallery/, "")));
-    }
-    var suffix = url.replace(new RegExp(".*" + stripUrl(url) + "(\/)?", "i"), "");
-    if (suffix.length === 7) {
-      return callback(url + ".jpg");
-    }
-  }
+  });
 };
 
 Sites.wikimedia = function (elem, callback) {
-  url = elem.src;
+  var url = elem.src;
   if (/(wikipedia|wikimedia)\.org/i.test(stripUrl(url)) && !/\.ogv|\.ogg/.test(url) && basicMatch(url)) {
     url = url.replace(/\/thumb/, "");
     if (/.*\.(png|jpg|jpeg|gif|svg|tif).*\.(png|jpg|jpeg|gif|svg|tif)/i.test(url)) {
@@ -194,10 +198,9 @@ Sites.facebook = function (elem, callback) {
     return;
   }
   function trimUrl(url) {
-    if (!url) {
-      return;
+    if (url) {
+      return url.replace(/url\(/, "").replace(/\)/, "").replace(/(\/[a-z])?\/t([0-9]+)\/.*[0-9]x([0-9]+)\//, "/").replace(/_[a-z](\.([a-zA-Z]+))$/, "_o$1");
     }
-    return url.replace(/url\(/, "").replace(/\)/, "").replace(/(\/[a-z])?\/t([0-9]+)\/.*[0-9]x([0-9]+)\//, "/").replace(/_[a-z](\.([a-zA-Z]+))$/, "_o$1");
   }
   if (/ImageContainer/.test(elem.className) && elem.firstChild && elem.firstChild.src) {
     callback(trimUrl(elem.firstChild.src));
@@ -215,35 +218,23 @@ Sites.facebook = function (elem, callback) {
 
 
 Sites.deviantart = function (elem, callback) {
-  urlArray = [];
-  if (elem.href) {
-    urlArray.push(elem.href);
-  }
-  if (elem.parentNode && elem.parentNode.href) {
-    urlArray.push(elem.parentNode.href);
-  }
-  if (urlArray.length === 0) {
-    return false;
-  }
-  for (var i = 0; i < urlArray.length; i++) {
-    url = urlArray[i];
-    if (!/deviantart\.(com|net)/i.test(url)) {
-      continue;
-    }
-    if (/\/fs([0-9]+)\/[a-zA-Z]\//.test(url)) {
-      callback(url);
-    } else if (/\/art\//i.test(url)) {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", "https://backend.deviantart.com/oembed?url=" + url);
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4 && xhr.status === 200) {
-          var parsed = JSON.parse(xhr.responseText);
-          return callback(parsed.url);
-        }
+  getUrls([elem, elem.parentNode]).forEach(function(url) {
+    if (/deviantart\.(com|net)/i.test(url)) {
+      if (/\/fs([0-9]+)\/[a-zA-Z]\//.test(url)) {
+        callback(url);
+      } else if (/\/art\//i.test(url)) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "https://backend.deviantart.com/oembed?url=" + url);
+        xhr.onreadystatechange = function() {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            var parsed = JSON.parse(xhr.responseText);
+            return callback(parsed.url);
+          }
+        };
+        xhr.send();
       }
-      xhr.send();
     }
-  }
+  });
 };
 
 Sites.googleUserContent = function (elem, callback) {
@@ -262,162 +253,71 @@ Sites.googleUserContent = function (elem, callback) {
   img.src = trimUrl(elem.src);
 };
 
-Sites.google = function (elem, callback) {
-  if (!/google\.com/.test(stripUrl(document.URL))) {
-    isGoogleUrl = false;
-    return;
-  }
-  if (elem.parentNode && /img/.test(elem.parentNode.href)) {
-    callback(unescape(decodeURIComponent(elem.parentNode.href.replace(/.*imgurl=([^\&]+\.(jpg|gif|png|jpeg|svg|tif)).*/i, "$1"))));
-  } else if (elem.id === "irc_mi" && basicMatch(elem.src)) {
-    callback(elem.src);
-  }
-};
-
-Sites.normal = function (elem, callback) {
-  var imageFound;
-  urlArray = [];
-  if (elem.href && basicMatch(elem.href)) {
-    urlArray.push(elem.href);
-  }
-  if (elem.parentNode && basicMatch(elem.parentNode.href)) {
-    urlArray.push(elem.parentNode.href);
-  }
-  if (urlArray.length === 0) {
-    return false;
-  }
-  for (var i = 0; i < urlArray.length; i++) {
-    if (imageFound) {
-      return;
-    }
-    url = urlArray[i];
+Sites.normal = function(elem, callback) {
+  getUrls([elem, elem.parentNode]).forEach(function(url) {
     if (basicMatch(url)) {
-      callback(url.replace(/.*url=/, ""));
+      return callback(url.replace(/.*url=/, ""));
     }
-  }
+  });
 };
 
-Sites.gfycat = function (elem, callback) {
-  urlArray = [];
-  if (elem.href && !basicMatch(elem.href))
-    urlArray.push(elem.href);
-  if (elem.parentNode && !basicMatch(elem.parentNode.href))
-    urlArray.push(elem.parentNode.href);
-  if (urlArray.length === 0) return false;
+Sites.gfycat = function(elem, callback) {
   function getGfySource (url) {
-    var x = new XMLHttpRequest();
-    x.open("GET", url);
-    x.onload = function () {
-      callback(x.responseText.match(/source id=('|")webmsource('|") src=('|")([^('|")]+)('|")/i)[0].replace(/^.*src=('|")/, "").replace(/('|")$/, ""),
-      x.responseText.match(/poster=('|")([^('|")]+)('|")/i)[0].replace(/^.*=('|")/, "").replace(/('|")$/, ""));
+    var xhr = new XMLHttpRequest();
+    xhr.open("GET", url);
+    xhr.onreadystatechange = function () {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        imageZoom.isVideo = true;
+        callback(xhr.responseText.match(/source id=('|")webmsource('|") src=('|")([^('|")]+)('|")/i)[0].replace(/^.*src=('|")/, "").replace(/('|")$/, ""), xhr.responseText.match(/poster=('|")([^('|")]+)('|")/i)[0].replace(/^.*=('|")/, "").replace(/('|")$/, ""));
+      }
     };
-    x.send();
+    xhr.send();
   }
-  for (var i = 0; i < urlArray.length; i++) {
-    url = urlArray[i];
-    if (/\.gif$/.test(url) || !/gfycat\.com/.test(stripUrl(url))) continue;
-    isVideo = true;
-    getGfySource(url.replace(/[^a-zA-Z_-]+$/, ""));
-    break;
-  }
-};
-
-Sites.webm = function (elem, callback) {
-  if (/\.webm$/.test(elem.parentNode.href)) {
-    callback(elem.parentNode.href, "1");
-  } else if (/\.webm$/.test(elem.href)) {
-    callback(elem.href, "1");
-  } else if (/\.m4v$/.test(elem.href)) {
-    isVideo = true;
-    container_vid_src.type = "video/mp4";
-    callback(elem.href, "1");
-  }
+  getUrls([elem, elem.parentNode]).forEach(function(url) {
+    if (!/\.gif$/.test(url) && /gfycat\.com/.test(stripUrl(url))) {
+      getGfySource(url.replace(/[^a-zA-Z_-]+$/, ""));
+      if (imageZoom.isVideo) {
+        return;
+      }
+    }
+  });
 };
 
 Sites.xkcd = function (elem, callback) {
-  urlArray = [];
-  if (elem.href) {
-    urlArray.push(elem.href);
-  }
-  if (elem.parentNode && elem.parentNode.href) {
-    urlArray.push(elem.parentNode.href);
-  }
-  if (urlArray.length === 0) {
-    return false;
-  }
-  for (var i = 0; i < urlArray.length; i++) {
-    url = urlArray[i];
-    if (!/xkcd\.com/i.test(stripUrl(url)) || !/xkcd\.com\/([0-9]+)(\/)?$/i.test(url)) {
-      continue;
+  getUrls([elem, elem.parentNode]).forEach(function(url) {
+    if (/xkcd\.com/i.test(stripUrl(url)) && /xkcd\.com\/([0-9]+)(\/)?$/i.test(url)) {
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", "http://xkcd.com/" + url.replace(/[^0-9]+/g, "") + "/info.0.json");
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          xhr = xhr.responseText;
+          var img = xhr.replace(/.*(http:\\\/\\\/([^\"]+)\.(png|jpg|jpeg|svg|tif)).*/i, "$1");
+          img = unescape(decodeURIComponent(img.replace(/\\\//g, "/")));
+          if (img) {
+            callback(img);
+          }
+        }
+      };
+      xhr.send();
     }
-    var x = new XMLHttpRequest();
-    x.open("GET", "http://xkcd.com/" + url.replace(/[^0-9]+/g, "") + "/info.0.json");
-    x.onload = function () {
-      x = x.responseText;
-      var img = x.replace(/.*(http:\\\/\\\/([^\"]+)\.(png|jpg|jpeg|svg|tif)).*/i, "$1");
-      img = unescape(decodeURIComponent(img.replace(/\\\//g, "/")));
-      if (img) {
-        callback(img);
-      }
-    };
-    x.send();
-  }
+  });
 };
 
-// oEmbed API version
-// Sites.flickr = function(elem, callback) {
-//   urlArray = [];
-//   if (elem.href) {
-//     urlArray.push(elem.href);
-//   }
-//   if (elem.parentNode && elem.parentNode.href) {
-//     urlArray.push(elem.parentNode.href);
-//   }
-//   if (urlArray.length === 0) {
-//     return false;
-//   }
-//   for (var i = 0; i < urlArray.length; i++) {
-//     url = urlArray[i];
-//     if (!/flickr\.com/i.test(stripUrl(url)) || !/\/([0-9]){10,11}(\/|$)/i.test(url)) {
-//       continue;
-//     }
-//     var xhr = new XMLHttpRequest();
-//     xhr.open("GET", "https://www.flickr.com/services/oembed/?format=json&url=" + url);
-//     xhr.onreadystatechange = function() {
-//       if (xhr.readyState === 4 && xhr.status === 200) {
-//         return callback(JSON.parse(xhr.responseText).url);
-//       }
-//     }
-//     xhr.send();
-//   }
-// };
-
-Sites.flickrApiPath = "https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=b5fcc857586ba650aa946ffee502daf2&format=json&photo_id=";
 Sites.flickr = function(elem, callback) {
-  urlArray = [];
-  if (elem.href) {
-    urlArray.push(elem.href);
-  }
-  if (elem.parentNode && elem.parentNode.href) {
-    urlArray.push(elem.parentNode.href);
-  }
-  if (urlArray.length === 0) {
-    return false;
-  }
-  for (var i = 0; i < urlArray.length; i++) {
-    url = urlArray[i];
-    if (!/flickr\.com/i.test(stripUrl(url)) || !/\/([0-9]){10,11}(\/|$)/i.test(url)) {
-      continue;
-    }
-    var photo_id = url.match(/\/([0-9]){10,11}(\/|$)/)[0].replace(/\//g, "");
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", Sites.flickrApiPath + photo_id);
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState === 4 && xhr.status === 200) {
-        var parsed = JSON.parse(xhr.responseText.replace(/.*Api\(/, "").replace(/\)/, "")).sizes.size;
-        return callback(parsed[parsed.length - 1].source);
+  var flickrApiPath = "https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=b5fcc857586ba650aa946ffee502daf2&format=json&photo_id=";
+  getUrls([elem, elem.parentNode]).forEach(function(url) {
+    if (/flickr\.com/i.test(stripUrl(url)) && /\/([0-9]){10,11}(\/|$)/i.test(url)) {
+      var photo_id = url.match(/\/([0-9]){10,11}(\/|$)/)[0].replace(/\//g, "");
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", flickrApiPath + photo_id);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          var parsed = JSON.parse(xhr.responseText.replace(/.*Api\(/, "").replace(/\)/, "")).sizes.size;
+          return callback(parsed[parsed.length - 1].source);
+        }
       }
+      xhr.send();
+      return;
     }
-    xhr.send();
-  }
+  });
 };
