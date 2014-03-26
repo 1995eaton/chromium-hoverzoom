@@ -130,9 +130,9 @@ imageZoom.adjustImage = function () {
   if (!this.frozen) {
     this.main.style.left = this.getImagePosX();
     this.main.style.top = this.getImagePosY();
-    if (this.linkRect && !this.checkHoveredLink()) {
-      return this.transition.out();
-    }
+    // if (this.linkRect && !this.checkHoveredLink()) {
+    //   return this.transition.out();
+    // }
   }
 
 };
@@ -219,6 +219,9 @@ imageZoom.appendVideo = function(src, elem, poster) {
 };
 
 imageZoom.appendImage = function(src) {
+  if (!imageZoom.checkHoveredLink()) {
+    return imageZoom.transition.hide();
+  }
   var currentElTemp = this.activeEl;
   currentElTemp.style.cursor = "wait";
   this.main.style.display = "block";
@@ -236,8 +239,7 @@ imageZoom.appendImage = function(src) {
   }
   var img = new Image();
   img.onload = function() {
-    if (!imgurAlbum.isAlbum && !imageZoom.frozen && !imageZoom.checkHoveredLink()) {
-      Sites.foundMatch = false;
+    if (!imageZoom.checkHoveredLink()) {
       return imageZoom.transition.hide();
     }
     currentElTemp.style.cursor = "";
@@ -254,13 +256,6 @@ imageZoom.appendImage = function(src) {
     }
     imageZoom.adjustImage();
     imageZoom.transition.in();
-    if (imageZoom.settings.addHistory === "true") {
-      if (imageZoom.activeEl.nodeName === "IMG") {
-        chrome.runtime.sendMessage({action: "addHistory", url: imageZoom.activeEl.parentNode.href});
-      } else {
-        chrome.runtime.sendMessage({action: "addHistory", url: imageZoom.activeEl.href});
-      }
-    }
     setTimeout(function() {
       imageZoom.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + imageZoom.settings.fadeVal + "s ease-out";
     }, 25);
@@ -394,10 +389,23 @@ mouse = {
 }
 
 transitionEnd = function(e) {
-  if (imageZoom.transition.fadingOut) {
-    imageZoom.transition.fadingOut = false;
-    imageZoom.transition.active = false;
-    imageZoom.transition.hide();
+  if (e.propertyName === "opacity") {
+    if (imageZoom.transition.fadingOut) {
+      imageZoom.transition.fadingOut = false;
+      imageZoom.transition.active = false;
+      imageZoom.transition.hide();
+    } else if (imageZoom.active) {
+      if (!imageZoom.checkHoveredLink()) {
+        return imageZoom.transition.out();
+      }
+      if (imageZoom.settings.addHistory === "true") {
+        if (imageZoom.activeEl.nodeName === "IMG") {
+          chrome.runtime.sendMessage({action: "addHistory", url: imageZoom.activeEl.parentNode.href});
+        } else {
+          chrome.runtime.sendMessage({action: "addHistory", url: imageZoom.activeEl.href});
+        }
+      }
+    }
   }
 };
 
@@ -499,7 +507,7 @@ listeners = {
       document.addEventListener("mouseover", onMouse.over, false);
       document.addEventListener("mousewheel", onMouse.wheel, false);
     }
-    document.addEventListener("transitionend", transitionEnd, false);
+    imageZoom.main.addEventListener("transitionend", transitionEnd, false);
   },
   disable: function(keyOnly, mouseOnly) {
     if (keyOnly) {
@@ -514,7 +522,7 @@ listeners = {
       document.removeEventListener("mouseup", onMouse.up, false);
       document.removeEventListener("mousewheel", onMouse.wheel, false);
     }
-    document.removeEventListener("transitionend", transitionEnd, false);
+    imageZoom.main.removeEventListener("transitionend", transitionEnd, false);
   }
 };
 
