@@ -449,6 +449,9 @@ onMouse = {
       imageZoom.transition.out();
     }
   },
+  leave: function() {
+    imageZoom.transition.out();
+  },
   down: function(e) {
     if (mouse.drag) {
       mouse.drag = false;
@@ -489,6 +492,7 @@ listeners = {
       document.addEventListener("mousemove", onMouse.move, false);
       document.addEventListener("mousedown", onMouse.down, false);
       document.addEventListener("mouseup", onMouse.up, false);
+      document.addEventListener("mouseleave", onMouse.leave, false);
       document.addEventListener("mouseover", onMouse.over, false);
       document.addEventListener("mousewheel", onMouse.wheel, false);
     }
@@ -502,6 +506,7 @@ listeners = {
     if (mouseOnly) {
       document.removeEventListener("mousemove", onMouse.move, false);
       document.removeEventListener("mouseover", onMouse.over, false);
+      document.removeEventListener("mouseleave", onMouse.leave, false);
       document.removeEventListener("mousedown", onMouse.down, false);
       document.removeEventListener("mouseup", onMouse.up, false);
       document.removeEventListener("mousewheel", onMouse.wheel, false);
