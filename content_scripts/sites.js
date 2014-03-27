@@ -31,7 +31,7 @@ imgurAlbum = {
           imgurAlbum.cached[id].captions = [];
           for (var i = 0; i < images.length; i++) {
             imgurAlbum.cached[id].images.push(images[i].links.original);
-            imgurAlbum.cached[id].captions.push(images[i].image.caption);
+            imgurAlbum.cached[id].captions.push(images[i].image.caption.trim());
           }
         }
       };
@@ -44,7 +44,7 @@ imgurAlbum = {
     this.isAlbum = true;
     imageZoom.albumIndex.innerText = this.cached[id].index + 1 + "/" + this.cached[id].images.length;
     imageZoom.caption.innerText = this.cached[this.id].captions[this.cached[this.id].index];
-    if (imageZoom.caption.innerText !== "") {
+    if (imageZoom.caption.innerText.trim() !== "") {
       imageZoom.caption.style.display = "block";
     }
     return this.cached[id].images[this.cached[id].index];
@@ -137,7 +137,7 @@ Sites.twitter = function (elem, callback) {
     img = elem.src.replace(/:thumb/, "") + ":large";
   } else if (elem.firstChild && /twimg/.test(elem.firstChild.src)) {
     img = elem.firstChild.src + ":large";
-  } else if (/is-preview/.test(elem.parentNode.className)) {
+  } else if (elem.parentNode && /is-preview/.test(elem.parentNode.className)) {
     img = elem.src;
   }
   if (img) {
@@ -147,7 +147,7 @@ Sites.twitter = function (elem, callback) {
 
 Sites.livememe = function (elem, callback) {
   var base = /livememe\.com/i;
-  if (base.test(stripUrl(elem.href)) || base.test(stripUrl(elem.parentNode.href))) {
+  if (base.test(stripUrl(elem.href)) || (elem.parentNode && base.test(stripUrl(elem.parentNode.href)))) {
     base = /[a-zA-Z0-9]{7}/;
     if (elem.href && base.test(elem.href)) {
       callback(elem.href + ".jpg");

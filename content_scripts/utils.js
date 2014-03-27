@@ -6,5 +6,5 @@ Object.prototype.isInput = function() {
 };
 
 Event.prototype.modifiers = function() {
-  return this.shiftKey || this.metaKey || this.altKey;
+  return this.shiftKey || this.metaKey || this.altKey || this.ctrlKey;
 };

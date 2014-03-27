@@ -324,7 +324,7 @@ onKey = {
           }
           break;
         case 67:
-          if (imgurAlbum.isAlbum) {
+          if (imgurAlbum.isAlbum && imageZoom.caption.innerText.trim() !== "") {
             imageZoom.caption.style.display = (imageZoom.caption.style.display === "block") ? "none" : "block";
           }
           break;
