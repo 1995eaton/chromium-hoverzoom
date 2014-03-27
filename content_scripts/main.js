@@ -304,14 +304,14 @@ imageZoom.detectImage = function(elem) {
 imageZoom.closeContainer = function() {
   this.frozen = false;
   mouse.drag = false;
-  mouse.meta = false;
+  key.meta = false;
   this.main.style.pointerEvents = "none";
   this.transition.out();
 };
 
 onKey = {
   down: function(e) {
-    if (e.which === 90) {
+    if (e.which === 90 && !e.modifiers() && !document.activeElement.isInput()) {
         imageZoom.disabled = !imageZoom.disabled;
         if (imageZoom.disabled) {
           listeners.disable(false, true);
@@ -319,19 +319,17 @@ onKey = {
         } else {
           listeners.enable(false, true);
         }
-    } else if (imageZoom.active) {
+    } else if (imageZoom.active && !e.modifiers() && !document.activeElement.isInput()) {
       switch (e.which) {
-        case 39:
-          if (imgurAlbum.isAlbum)
-            imgurAlbum.getImage(true);
-          break;
-        case 37:
-          if (imgurAlbum.isAlbum)
-            imgurAlbum.getImage(false);
+        case 39: case 37:
+          if (imgurAlbum.isAlbum) {
+            imgurAlbum.getImage(e.which === 39);
+          }
           break;
         case 67:
-          if (imgurAlbum.isAlbum)
+          if (imgurAlbum.isAlbum) {
             imageZoom.caption.style.display = (imageZoom.caption.style.display === "block") ? "none" : "block";
+          }
           break;
         case 91:
           key.meta = true;
@@ -349,17 +347,16 @@ onKey = {
         case 65:
           if (imageZoom.active && !imageZoom.isVideo && imageZoom.image.src) {
             chrome.runtime.sendMessage({action: "openLink", url: imageZoom.image.src});
+            imageZoom.closeContainer();
             imageZoom.transition.hide();
           } else if (imageZoom.active && imageZoom.isVideo && imageZoom.videoSource.src) {
             chrome.runtime.sendMessage({action: "openLink", url: imageZoom.videoSource.src});
+            imageZoom.closeContainer();
             imageZoom.transition.hide();
           }
           break;
         default:
-          if (!e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey) {
-            imageZoom.closeContainer();
-
-          }
+          imageZoom.closeContainer();
           break;
       }
     }
@@ -389,7 +386,7 @@ mouse = {
 }
 
 transitionEnd = function(e) {
-  if (e.propertyName === "opacity") {
+  if (!imageZoom.frozen && e.propertyName === "opacity") {
     if (imageZoom.transition.fadingOut) {
       imageZoom.transition.fadingOut = false;
       imageZoom.transition.active = false;

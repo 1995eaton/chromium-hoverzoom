@@ -24,7 +24,8 @@
       "matches": ["<all_urls>"],
       "js": [
              "content_scripts/main.js",
-             "content_scripts/sites.js"
+             "content_scripts/sites.js",
+             "content_scripts/utils.js"
             ],
       "css": [ "content_scripts/main_nomodify.css" ],
       "run_at": "document_start",
