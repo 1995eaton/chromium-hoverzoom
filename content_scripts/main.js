@@ -60,58 +60,40 @@ imageZoom.init = function() {
 
 imageZoom.getImagePosX = function() {
   if (this.main.offsetWidth - 2 * this.settings.offsetVal >= window.innerWidth) {
-    if (mouse.x > window.innerWidth / 2) {
+    if (mouse.x > window.innerWidth / 2)
       return document.body.scrollLeft + this.settings.offsetVal + "px";
-    } else {
-      return document.body.scrollLeft + window.innerWidth - 2 * this.settings.offsetVal - this.main.offsetWidth + "px";
-    }
-  } else {
-    if (mouse.x > window.innerWidth / 2) {
-      if (this.main.offsetWidth > mouse.x - 2 * this.settings.offsetVal) {
-        return document.body.scrollLeft + this.settings.offsetVal + "px";
-      } else {
-        return document.body.scrollLeft + mouse.x - this.main.offsetWidth - this.settings.offsetVal + "px";
-      }
-    } else {
-      if (this.main.offsetWidth > window.innerWidth - mouse.x - 3 * this.settings.offsetVal) {
-        return document.body.scrollLeft + window.innerWidth - this.main.offsetWidth - 2 * this.settings.offsetVal + "px";
-      } else {
-        return document.body.scrollLeft + mouse.x + this.settings.offsetVal + "px";
-      }
-    }
+    return document.body.scrollLeft + window.innerWidth - 2 * this.settings.offsetVal - this.main.offsetWidth + "px";
   }
+  if (mouse.x > window.innerWidth / 2) {
+    if (this.main.offsetWidth > mouse.x - 2 * this.settings.offsetVal)
+      return document.body.scrollLeft + this.settings.offsetVal + "px";
+    return document.body.scrollLeft + mouse.x - this.main.offsetWidth - this.settings.offsetVal + "px";
+  }
+  if (this.main.offsetWidth > window.innerWidth - mouse.x - 3 * this.settings.offsetVal)
+    return document.body.scrollLeft + window.innerWidth - this.main.offsetWidth - 2 * this.settings.offsetVal + "px";
+  return document.body.scrollLeft + mouse.x + this.settings.offsetVal + "px";
 };
 
 imageZoom.getImagePosY = function() {
   if (this.main.offsetHeight - 2 * this.settings.offsetVal >= window.innerHeight) {
-    if (mouse.y > window.innerHeight / 2) {
+    if (mouse.y > window.innerHeight / 2)
       return document.body.scrollTop + window.innerHeight - this.settings.offsetVal - this.main.offsetHeight + "px";
-    } else {
-      return document.body.scrollTop + this.settings.offsetVal + "px";
-    }
-  } else {
-    if (mouse.y > window.innerHeight / 2) {
-      if (this.main.offsetHeight / 2 > window.innerHeight - mouse.y - 2 * this.settings.offsetVal) {
-        if (this.main.offsetHeight + window.innerHeight - mouse.y + 2 * this.settings.offsetVal > window.innerHeight) {
-          return document.body.scrollTop + this.settings.offsetVal + "px";
-        } else {
-          return document.body.scrollTop + mouse.y - this.main.offsetHeight - this.settings.offsetVal + "px";
-        }
-      } else {
-        return document.body.scrollTop + mouse.y - this.settings.offsetVal - this.main.offsetHeight / 2 + "px";
-      }
-    } else {
-      if (this.main.offsetHeight / 2 > mouse.y - 2 * this.settings.offsetVal) {
-        if (this.main.offsetHeight + mouse.y + 2 * this.settings.offsetVal > window.innerHeight) {
-          return document.body.scrollTop + window.innerHeight - this.main.offsetHeight - this.settings.offsetVal + "px";
-        } else {
-          return document.body.scrollTop + mouse.y + this.settings.offsetVal + "px";
-        }
-      } else {
-        return document.body.scrollTop + mouse.y - this.settings.offsetVal - this.main.offsetHeight / 2 + "px";
-      }
-    }
+    return document.body.scrollTop + this.settings.offsetVal + "px";
   }
+  if (mouse.y > window.innerHeight / 2) {
+    if (this.main.offsetHeight / 2 > window.innerHeight - mouse.y - 2 * this.settings.offsetVal) {
+      if (this.main.offsetHeight + window.innerHeight - mouse.y + 2 * this.settings.offsetVal > window.innerHeight)
+        return document.body.scrollTop + this.settings.offsetVal + "px";
+      return document.body.scrollTop + mouse.y - this.main.offsetHeight - this.settings.offsetVal + "px";
+    }
+    return document.body.scrollTop + mouse.y - this.settings.offsetVal - this.main.offsetHeight / 2 + "px";
+  }
+  if (this.main.offsetHeight / 2 > mouse.y - 2 * this.settings.offsetVal) {
+    if (this.main.offsetHeight + mouse.y + 2 * this.settings.offsetVal > window.innerHeight)
+      return document.body.scrollTop + window.innerHeight - this.main.offsetHeight - this.settings.offsetVal + "px";
+    return document.body.scrollTop + mouse.y + this.settings.offsetVal + "px";
+  }
+  return document.body.scrollTop + mouse.y - this.settings.offsetVal - this.main.offsetHeight / 2 + "px";
 };
 
 imageZoom.adjustImage = function() {
@@ -136,21 +118,21 @@ imageZoom.adjustImage = function() {
 
 imageZoom.startMonitor = function() {
   var loop = setInterval(function() {
-    if (!imageZoom.transition.active) {
-      imageZoom.transition.out();
-    } else if (!imageZoom.transition.fadingOut && !imageZoom.frozen && !key.meta) {
-      imageZoom.adjustImage();
+    if (!this.transition.active) {
+      this.transition.out();
+    } else if (!this.transition.fadingOut && !this.frozen && !key.meta) {
+      this.adjustImage();
     }
-    if (!imageZoom.active) {
+    if (!this.active) {
       clearInterval(loop);
     }
-  }, 1000 / parseInt(imageZoom.settings.updateIntervalVal));
-}
+  }.bind(this), 1000 / parseInt(this.settings.updateIntervalVal));
+};
 
 imageZoom.checkHoveredLink = function() {
-  return !((mouse.x < imageZoom.linkRect.left || mouse.x > imageZoom.linkRect.left + imageZoom.linkRect.width ||
-            mouse.y < imageZoom.linkRect.top  || mouse.y > imageZoom.linkRect.top  + imageZoom.linkRect.height) &&
-            !imageZoom.transition.fadingOut);
+  return !((mouse.x < this.linkRect.left || mouse.x > this.linkRect.left + this.linkRect.width ||
+            mouse.y < this.linkRect.top  || mouse.y > this.linkRect.top  + this.linkRect.height) &&
+            !this.transition.fadingOut);
 };
 
 imageZoom.transition = {
@@ -194,30 +176,30 @@ imageZoom.appendVideo = function(src, elem, poster) {
   this.video.poster = poster;
   this.videoSource.src = src;
   this.video.onloadedmetadata = function() {
-    imageZoom.main.style.display = "block";
-    imageZoom.video.style.display = "block";
-    imageZoom.height = imageZoom.video.videoHeight;
-    imageZoom.width  = imageZoom.video.videoWidth;
-    imageZoom.adjustImage();
-    if (!imageZoom.frozen) {
-      imageZoom.main.style.transition = "opacity " + imageZoom.settings.fadeVal + "s ease-out";
+    this.main.style.display = "block";
+    this.video.style.display = "block";
+    this.height = this.video.videoHeight;
+    this.width  = this.video.videoWidth;
+    this.adjustImage();
+    if (!this.frozen) {
+      this.main.style.transition = "opacity " + this.settings.fadeVal + "s ease-out";
     } else {
-      imageZoom.main.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + imageZoom.settings.fadeVal + "s ease-out";
+      this.main.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + this.settings.fadeVal + "s ease-out";
     }
-    imageZoom.isVideo = true;
-    imageZoom.transition.in();
+    this.isVideo = true;
+    this.transition.in();
     setTimeout(function() {
       currentElTemp.style.cursor = "";
-      imageZoom.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + imageZoom.settings.fadeVal + "s ease-out";
-    }, 25);
-  };
+      this.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + this.settings.fadeVal + "s ease-out";
+    }.bind(this), 25);
+  }.bind(this);
   this.video.load();
   chrome.runtime.sendMessage({url: elem.href || elem.parentNode.href});
 };
 
 imageZoom.appendImage = function(src) {
-  if (!imageZoom.checkHoveredLink()) {
-    return imageZoom.transition.hide();
+  if (!this.frozen && !this.checkHoveredLink()) {
+    return this.transition.hide();
   }
   var currentElTemp = this.activeEl;
   currentElTemp.style.cursor = "wait";
@@ -236,27 +218,27 @@ imageZoom.appendImage = function(src) {
   }
   var img = new Image();
   img.onload = function() {
-    if (!imageZoom.checkHoveredLink()) {
-      return imageZoom.transition.hide();
+    if (!this.frozen && !this.checkHoveredLink()) {
+      return this.transition.hide();
     }
     currentElTemp.style.cursor = "";
-    imageZoom.image.src = src;
-    imageZoom.height = img.height;
-    imageZoom.width = img.width;
-    imageZoom.main.style.display = "block";
-    imageZoom.image.style.display = "block";
-    imageZoom.video.style.display = "none";
-    if (!imageZoom.frozen) {
-      imageZoom.main.style.transition = "opacity" + imageZoom.settings.fadeVal + "s ease-out";
+    this.image.src = src;
+    this.height = img.height;
+    this.width = img.width;
+    this.main.style.display = "block";
+    this.image.style.display = "block";
+    this.video.style.display = "none";
+    if (!this.frozen) {
+      this.main.style.transition = "opacity" + this.settings.fadeVal + "s ease-out";
     } else {
-      imageZoom.main.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + imageZoom.settings.fadeVal + "s ease-out";
+      this.main.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + this.settings.fadeVal + "s ease-out";
     }
-    imageZoom.adjustImage();
-    imageZoom.transition.in();
+    this.adjustImage();
+    this.transition.in();
     setTimeout(function() {
-      imageZoom.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + imageZoom.settings.fadeVal + "s ease-out";
-    }, 25);
-  };
+      this.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + this.settings.fadeVal + "s ease-out";
+    }.bind(this), 25);
+  }.bind(this);
   img.src = src;
 };
 
@@ -265,13 +247,13 @@ imageZoom.tryMatch = function(f, elem) {
   f(elem, function(src, poster) {
     if (!src) return false;
     Sites.foundMatch = true;
-    imageZoom.linkRect = elem.getBoundingClientRect();
-    imageZoom.activeEl = elem;
+    this.linkRect = elem.getBoundingClientRect();
+    this.activeEl = elem;
     if (!poster) {
-      return imageZoom.appendImage(src);
+      return this.appendImage(src);
     }
-    return imageZoom.appendVideo(src, elem, poster);
-  });
+    return this.appendVideo(src, elem, poster);
+  }.bind(this));
 };
 
 imageZoom.testUrl = function(elem) {
@@ -279,21 +261,21 @@ imageZoom.testUrl = function(elem) {
     return false;
   }
   Sites.foundMatch = false;
-  for (var i = 0, l = imageZoom.sites.length; i < l; i++) {
+  for (var i = 0, l = this.sites.length; i < l; i++) {
     if (Sites.foundMatch) {
       break;
     }
-    imageZoom.tryMatch(imageZoom.sites[i], elem);
+    this.tryMatch(this.sites[i], elem);
   }
-}
+};
 
 imageZoom.detectImage = function(elem) {
   if (!this.frozen && !key.meta || /DIV|A|IMG/.test(elem.nodeName)) {
     setTimeout(function() {
       if (mouse.hoverEl === elem) {
-        imageZoom.testUrl(elem);
+        this.testUrl(elem);
       }
-    }, parseFloat(this.settings.hoverVal) * 1000);
+    }.bind(this), parseFloat(this.settings.hoverVal) * 1000);
     mouse.hoverEl = elem;
   }
 };
@@ -378,7 +360,7 @@ mouse = {
   wheelX: null,
   wheelY: null,
   hoverEl: null
-}
+};
 
 transitionEnd = function(e) {
   if (!imageZoom.frozen && e.propertyName === "opacity") {
@@ -572,7 +554,7 @@ function setup() {
   if (!b) return false;
   var s = addCustomStylesheet(imageZoom.settings.cssVal);
   if (!s) return false;
-  imageZoom.settings.offsetVal = parseInt(imageZoom.settings.offsetVal)
+  imageZoom.settings.offsetVal = parseInt(imageZoom.settings.offsetVal);
   initSites();
   listeners.enable(true, true);
 }

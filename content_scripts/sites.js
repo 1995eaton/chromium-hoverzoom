@@ -7,16 +7,17 @@ imgurAlbum = {
 
   isAlbum: null,
   id: null,
-  images: function() {
-    if (imgurAlbum.id && imgurAlbum.isAlbum)
-      return imgurAlbum.cached[id].images;
-  },
-  captions: function() {
-    if (imgurAlbum.id && imgurAlbum.isAlbum)
-      return imgurAlbum.cached[id].captions;
-  },
   index: null,
   cached: {},
+
+  images: function() {
+    if (this.id && this.isAlbum)
+      return this.cached[id].images;
+  },
+  captions: function() {
+    if (this.id && this.isAlbum)
+      return this.cached[id].captions;
+  },
 
   getAlbum: function(id) {
     if (!imgurAlbum.cached[id]) {
@@ -25,16 +26,16 @@ imgurAlbum = {
       xhr.onreadystatechange = function() {
         if (xhr.readyState === 4 && xhr.status === 200) {
           var images = JSON.parse(xhr.responseText).album.images;
-          imgurAlbum.cached[id] = {};
-          imgurAlbum.cached[id].index = 0;
-          imgurAlbum.cached[id].images = [];
-          imgurAlbum.cached[id].captions = [];
+          this.cached[id] = {};
+          this.cached[id].index = 0;
+          this.cached[id].images = [];
+          this.cached[id].captions = [];
           for (var i = 0; i < images.length; i++) {
-            imgurAlbum.cached[id].images.push(images[i].links.original);
-            imgurAlbum.cached[id].captions.push(images[i].image.caption.trim());
+            this.cached[id].images.push(images[i].links.original);
+            this.cached[id].captions.push(images[i].image.caption.trim());
           }
         }
-      };
+      }.bind(this);
       xhr.send();
     }
     if (!this.cached[id]) {
@@ -63,8 +64,8 @@ imgurAlbum = {
       var img = new Image();
       img.onload = function() {
         imageZoom.activeEl.style.cursor = "";
-        if (imgurAlbum.isAlbum) {
-          imageZoom.caption.innerText = imgurAlbum.cached[imgurAlbum.id].captions[imgurAlbum.cached[imgurAlbum.id].index];
+        if (this.isAlbum) {
+          imageZoom.caption.innerText = this.cached[this.id].captions[this.cached[this.id].index];
           imageZoom.caption.style.display = "block";
         }
         if (imageZoom.caption.innerHTML === "") {
@@ -72,7 +73,7 @@ imgurAlbum = {
           imageZoom.caption.style.display = "none";
         }
         imageZoom.appendImage(img.src, true);
-      }
+      }.bind(this);
       img.src = this.cached[this.id].images[this.cached[this.id].index];
     }
   }
@@ -122,7 +123,7 @@ Sites.gravatar = function(elem, callback) {
   img.onload = function() {
     if (img.width > elem.width) {
       callback(url);
-    };
+    }
   };
   img.src = url;
 };
@@ -315,7 +316,7 @@ Sites.flickr = function(elem, callback) {
           var parsed = JSON.parse(xhr.responseText.replace(/.*Api\(/, "").replace(/\)/, "")).sizes.size;
           return callback(parsed[parsed.length - 1].source);
         }
-      }
+      };
       xhr.send();
       return;
     }
