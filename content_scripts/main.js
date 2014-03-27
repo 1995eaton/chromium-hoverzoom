@@ -130,9 +130,6 @@ imageZoom.adjustImage = function () {
   if (!this.frozen) {
     this.main.style.left = this.getImagePosX();
     this.main.style.top = this.getImagePosY();
-    // if (this.linkRect && !this.checkHoveredLink()) {
-    //   return this.transition.out();
-    // }
   }
 
 };
@@ -315,7 +312,7 @@ onKey = {
         imageZoom.disabled = !imageZoom.disabled;
         if (imageZoom.disabled) {
           listeners.disable(false, true);
-          imageZoom.transition.out();
+          imageZoom.closeContainer();
         } else {
           listeners.enable(false, true);
         }
@@ -348,11 +345,9 @@ onKey = {
           if (imageZoom.active && !imageZoom.isVideo && imageZoom.image.src) {
             chrome.runtime.sendMessage({action: "openLink", url: imageZoom.image.src});
             imageZoom.closeContainer();
-            imageZoom.transition.hide();
           } else if (imageZoom.active && imageZoom.isVideo && imageZoom.videoSource.src) {
             chrome.runtime.sendMessage({action: "openLink", url: imageZoom.videoSource.src});
             imageZoom.closeContainer();
-            imageZoom.transition.hide();
           }
           break;
         default:
