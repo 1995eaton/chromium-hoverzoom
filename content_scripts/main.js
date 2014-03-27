@@ -46,7 +46,7 @@ imageZoom.init = function() {
   this.video.id = "hvzoom_img_container_video";
   this.video.autoplay = true;
   this.video.loop = true;
-  
+
   this.videoSource = document.createElement("source");
   this.videoSource.id = "hvzoom_vid_src";
   this.videoSource.type = "video/webm";
@@ -58,7 +58,7 @@ imageZoom.init = function() {
 
 };
 
-imageZoom.getImagePosX = function () {
+imageZoom.getImagePosX = function() {
   if (this.main.offsetWidth - 2 * this.settings.offsetVal >= window.innerWidth) {
     if (mouse.x > window.innerWidth / 2) {
       return document.body.scrollLeft + this.settings.offsetVal + "px";
@@ -82,7 +82,7 @@ imageZoom.getImagePosX = function () {
   }
 };
 
-imageZoom.getImagePosY = function () {
+imageZoom.getImagePosY = function() {
   if (this.main.offsetHeight - 2 * this.settings.offsetVal >= window.innerHeight) {
     if (mouse.y > window.innerHeight / 2) {
       return document.body.scrollTop + window.innerHeight - this.settings.offsetVal - this.main.offsetHeight + "px";
@@ -114,7 +114,7 @@ imageZoom.getImagePosY = function () {
   }
 };
 
-imageZoom.adjustImage = function () {
+imageZoom.adjustImage = function() {
   if (this.width > window.innerWidth - 2 * this.settings.offsetVal || this.height > window.innerHeight - 2 * this.settings.offsetVal) {
     if (this.width / window.innerWidth > this.height / window.innerHeight) {
       this.main.style.width = window.innerWidth - 3 * this.settings.offsetVal + "px";

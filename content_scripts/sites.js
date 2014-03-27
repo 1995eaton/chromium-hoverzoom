@@ -18,7 +18,7 @@ imgurAlbum = {
   index: null,
   cached: {},
 
-  getAlbum: function (id) {
+  getAlbum: function(id) {
     if (!imgurAlbum.cached[id]) {
       var xhr = new XMLHttpRequest();
       xhr.open("GET", "https://api.imgur.com/2/album/" + id.replace(/#.*/, "") + ".json", false);
@@ -50,7 +50,7 @@ imgurAlbum = {
     return this.cached[id].images[this.cached[id].index];
   },
 
-  getImage: function (next) {
+  getImage: function(next) {
     var albumLength = this.cached[this.id].images.length;
     var index = this.cached[this.id].index;
     if (this.cached[this.id].images.length > 1) {
@@ -61,7 +61,7 @@ imgurAlbum = {
       }
       imageZoom.albumIndex.innerText = this.cached[this.id].index + 1 + "/" + albumLength;
       var img = new Image();
-      img.onload = function () {
+      img.onload = function() {
         imageZoom.activeEl.style.cursor = "";
         if (imgurAlbum.isAlbum) {
           imageZoom.caption.innerText = imgurAlbum.cached[imgurAlbum.id].captions[imgurAlbum.cached[imgurAlbum.id].index];
@@ -79,11 +79,11 @@ imgurAlbum = {
 
 };
 
-basicMatch = function (url) {
+basicMatch = function(url) {
   return (/\.(png|jpeg|jpg|svg|gif|tif)((:large|((\\?[^?])+))$)?/i).test(url);
 };
 
-stripUrl = function (url) {
+stripUrl = function(url) {
   if (!url) {
     return;
   }
@@ -105,7 +105,7 @@ getUrls = function(elems) {
   return urlArray;
 };
 
-Sites.github = function (elem, callback) {
+Sites.github = function(elem, callback) {
   var url = elem.src;
   if (!url || !/avatars/.test(url) || !/githubusercontent\.com/.test(stripUrl(url))) {
     return;
@@ -113,13 +113,13 @@ Sites.github = function (elem, callback) {
   callback(url);
 };
 
-Sites.gravatar = function (elem, callback) {
+Sites.gravatar = function(elem, callback) {
   var url = elem.src;
   if (!url || !/gravatar\.com/.test(stripUrl(url)) || !basicMatch(url)) {
     return;
   }
   var img = new Image();
-  img.onload = function () {
+  img.onload = function() {
     if (img.width > elem.width) {
       callback(url);
     };
@@ -127,7 +127,7 @@ Sites.gravatar = function (elem, callback) {
   img.src = url;
 };
 
-Sites.twitter = function (elem, callback) {
+Sites.twitter = function(elem, callback) {
   var img;
   if (elem.className === "media-overlay" && elem.previousElementSibling.src) {
     img = elem.previousElementSibling.src;
@@ -145,7 +145,7 @@ Sites.twitter = function (elem, callback) {
   }
 };
 
-Sites.livememe = function (elem, callback) {
+Sites.livememe = function(elem, callback) {
   var base = /livememe\.com/i;
   if (base.test(stripUrl(elem.href)) || (elem.parentNode && base.test(stripUrl(elem.parentNode.href)))) {
     base = /[a-zA-Z0-9]{7}/;
@@ -158,7 +158,7 @@ Sites.livememe = function (elem, callback) {
 };
 
 
-Sites.imgur = function (elem, callback) {
+Sites.imgur = function(elem, callback) {
   getUrls([elem, elem.parentNode]).forEach(function(url) {
     if (!/\/random/.test(url) && /imgur\.com/i.test(stripUrl(url))) {
       imgurAlbum.isAlbum = false;
@@ -182,7 +182,7 @@ Sites.imgur = function (elem, callback) {
   });
 };
 
-Sites.wikimedia = function (elem, callback) {
+Sites.wikimedia = function(elem, callback) {
   var url = elem.src;
   if (/(wikipedia|wikimedia)\.org/i.test(stripUrl(url)) && !/\.ogv|\.ogg/.test(url) && basicMatch(url)) {
     url = url.replace(/\/thumb/, "");
@@ -193,7 +193,7 @@ Sites.wikimedia = function (elem, callback) {
   }
 };
 
-Sites.facebook = function (elem, callback) {
+Sites.facebook = function(elem, callback) {
   if (!/facebook\.com/.test(document.URL) || /ContentWrapper/.test(elem.className) || /(fbexternal|_b\.([a-zA-Z]+)$)/.test(elem.src)) {
     return;
   }
@@ -217,7 +217,7 @@ Sites.facebook = function (elem, callback) {
 };
 
 
-Sites.deviantart = function (elem, callback) {
+Sites.deviantart = function(elem, callback) {
   getUrls([elem, elem.parentNode]).forEach(function(url) {
     if (/deviantart\.(com|net)/i.test(url)) {
       if (/\/fs([0-9]+)\/[a-zA-Z]\//.test(url)) {
@@ -237,7 +237,7 @@ Sites.deviantart = function (elem, callback) {
   });
 };
 
-Sites.googleUserContent = function (elem, callback) {
+Sites.googleUserContent = function(elem, callback) {
   if (!/googleusercontent\.com/.test(stripUrl(elem.src)) || !basicMatch(elem.src)) {
     return;
   }
@@ -245,7 +245,7 @@ Sites.googleUserContent = function (elem, callback) {
     return url.replace(/\/[a-z][0-9]([^\/]+)(\/([^\/]+)\.(jpg|svg|jpeg|png|gif|tif)$)/i, "/s0$2");
   }
   var img = new Image();
-  img.onload = function () {
+  img.onload = function() {
     if (img.width > elem.width) {
       callback(img.src);
     }
@@ -265,7 +265,7 @@ Sites.gfycat = function(elem, callback) {
   function getGfySource (url) {
     var xhr = new XMLHttpRequest();
     xhr.open("GET", url);
-    xhr.onreadystatechange = function () {
+    xhr.onreadystatechange = function() {
       if (xhr.readyState === 4 && xhr.status === 200) {
         imageZoom.isVideo = true;
         callback(xhr.responseText.match(/source id=('|")webmsource('|") src=('|")([^('|")]+)('|")/i)[0].replace(/^.*src=('|")/, "").replace(/('|")$/, ""), xhr.responseText.match(/poster=('|")([^('|")]+)('|")/i)[0].replace(/^.*=('|")/, "").replace(/('|")$/, ""));
@@ -283,12 +283,12 @@ Sites.gfycat = function(elem, callback) {
   });
 };
 
-Sites.xkcd = function (elem, callback) {
+Sites.xkcd = function(elem, callback) {
   getUrls([elem, elem.parentNode]).forEach(function(url) {
     if (/xkcd\.com/i.test(stripUrl(url)) && /xkcd\.com\/([0-9]+)(\/)?$/i.test(url)) {
       var xhr = new XMLHttpRequest();
       xhr.open("GET", "http://xkcd.com/" + url.replace(/[^0-9]+/g, "") + "/info.0.json");
-      xhr.onreadystatechange = function () {
+      xhr.onreadystatechange = function() {
         if (xhr.readyState === 4 && xhr.status === 200) {
           xhr = xhr.responseText;
           var img = xhr.replace(/.*(http:\\\/\\\/([^\"]+)\.(png|jpg|jpeg|svg|tif)).*/i, "$1");
