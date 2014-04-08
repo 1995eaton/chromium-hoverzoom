@@ -81,7 +81,7 @@ imgurAlbum = {
 };
 
 basicMatch = function(url) {
-  return (/\.(png|jpeg|jpg|svg|gif|tif)((:large|((\\?[^?])+))$)?/i).test(url);
+  return (/\.(png|jpeg|jpg|svg|gif|tif|tiff|bmp)((:large|((\\?[^?])+))$)?/i).test(url);
 };
 
 stripUrl = function(url) {
