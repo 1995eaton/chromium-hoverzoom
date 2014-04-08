@@ -269,6 +269,7 @@ Sites.gfycat = function(elem, callback) {
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4 && xhr.status === 200) {
         imageZoom.isVideo = true;
+        imageZoom.videoSource.type = "video/webm";
         callback(xhr.responseText.match(/source id=('|")webmsource('|") src=('|")([^('|")]+)('|")/i)[0].replace(/^.*src=('|")/, "").replace(/('|")$/, ""), xhr.responseText.match(/poster=('|")([^('|")]+)('|")/i)[0].replace(/^.*=('|")/, "").replace(/('|")$/, ""));
       }
     };
@@ -280,6 +281,24 @@ Sites.gfycat = function(elem, callback) {
       if (imageZoom.isVideo) {
         return;
       }
+    }
+  });
+};
+
+Sites.video = function(elem, callback) {
+  getUrls([elem, elem.parentNode]).forEach(function(url) {
+    if (/\.webm(\?([^?]+))?$/.test(url)) {
+      imageZoom.isVideo = true;
+      imageZoom.videoSource.type = "video/webm";
+      return callback(url);
+    } else if (/\.(mp4|m4v)(\?([^?]+))?$/.test(url)) {
+      imageZoom.videoSource.type = "video/mp4";
+      imageZoom.isVideo = true;
+      return callback(url);
+    } else if (/\.ogv(\?([^?]+))?$/.test(url)) {
+      imageZoom.videoSource.type = "video/ogg";
+      imageZoom.isVideo = true;
+      return callback(url);
     }
   });
 };

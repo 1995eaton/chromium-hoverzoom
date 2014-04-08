@@ -7,6 +7,7 @@ function initSites() {
     Sites.flickr,
     Sites.imgur,
     Sites.gfycat,
+    Sites.video,
     Sites.livememe,
     Sites.twitter,
     Sites.facebook,
@@ -145,6 +146,9 @@ imageZoom.transition = {
   },
   out: function() {
     imageZoom.active = false;
+    if (imageZoom.isVideo) {
+      imageZoom.video.pause();
+    }
     imageZoom.isVideo = false;
     this.active = false;
     imgurAlbum.isAlbum = false;
@@ -173,7 +177,9 @@ imageZoom.appendVideo = function(src, elem, poster) {
   this.video.removeAttribute("controls");
   this.image.style.display = "none";
   currentElTemp.style.cursor = "wait";
-  this.video.poster = poster;
+  if (poster) {
+    this.video.poster = poster;
+  }
   this.videoSource.src = src;
   this.video.onloadedmetadata = function() {
     this.main.style.display = "block";
@@ -249,7 +255,7 @@ imageZoom.tryMatch = function(f, elem) {
     Sites.foundMatch = true;
     this.linkRect = elem.getBoundingClientRect();
     this.activeEl = elem;
-    if (!poster) {
+    if (!imageZoom.isVideo) {
       return this.appendImage(src);
     }
     return this.appendVideo(src, elem, poster);
