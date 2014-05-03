@@ -121,7 +121,7 @@ imageZoom.startMonitor = function() {
   var loop = setInterval(function() {
     if (!this.transition.active) {
       this.transition.out();
-    } else if (!this.transition.fadingOut && !this.frozen && !key.meta) {
+    } else if (!this.transition.fadingOut && !this.frozen && !key.freeze) {
       this.adjustImage();
     }
     if (!this.active) {
@@ -276,7 +276,7 @@ imageZoom.testUrl = function(elem) {
 };
 
 imageZoom.detectImage = function(elem) {
-  if (!this.frozen && !key.meta || /DIV|A|IMG/.test(elem.nodeName)) {
+  if (!this.frozen && !key.freeze || /DIV|A|IMG/.test(elem.nodeName)) {
     setTimeout(function() {
       if (mouse.hoverEl === elem) {
         this.testUrl(elem);
@@ -289,7 +289,7 @@ imageZoom.detectImage = function(elem) {
 imageZoom.closeContainer = function() {
   this.frozen = false;
   mouse.drag = false;
-  key.meta = false;
+  key.freeze = false;
   this.main.style.pointerEvents = "none";
   this.transition.out();
 };
@@ -316,8 +316,8 @@ onKey = {
             imageZoom.caption.style.display = (imageZoom.caption.style.display === "block") ? "none" : "block";
           }
           break;
-        case 91:
-          key.meta = true;
+        case 72:
+          key.freeze = true;
           imageZoom.main.style.pointerEvents = "auto";
           break;
         case 32:
@@ -345,8 +345,8 @@ onKey = {
     }
   },
   up: function(e) {
-    if (e.which === 91) {
-      key.meta = false;
+    if (e.which === 72) {
+      key.freeze = false;
       if (!imageZoom.frozen) {
         imageZoom.transition.out();
       }
@@ -355,7 +355,7 @@ onKey = {
 };
 
 key = {
-  meta: false
+  freeze: false
 };
 
 mouse = {
@@ -406,7 +406,7 @@ onMouse = {
         imageZoom.main.style.left = document.body.scrollLeft + mouse.x - mouse.dragX + "px";
         imageZoom.main.style.top  = document.body.scrollTop  + mouse.y - mouse.dragY + "px";
       }
-      if (imageZoom.linkRect && !imageZoom.frozen && !key.meta) {
+      if (imageZoom.linkRect && !imageZoom.frozen && !key.freeze) {
         if (!imageZoom.checkHoveredLink()) {
           Sites.foundMatch = false;
           imageZoom.transition.out();
@@ -418,7 +418,7 @@ onMouse = {
     if (mouse.wheelX === mouse.x && mouse.wheelY === mouse.y) {
       return imageZoom.redetectImage = true;
     }
-    if (!imageZoom.frozen && !key.meta && /DIV|A|IMG/.test(e.target.nodeName)) {
+    if (!imageZoom.frozen && !key.freeze && /DIV|A|I|IMG/.test(e.target.nodeName)) {
       imageZoom.detectImage(e.target);
     }
     imageZoom.ignore = /hvzoom/.test(e.target.id);
@@ -458,10 +458,10 @@ onMouse = {
         }
         mouse.dragX = document.body.scrollLeft + e.x - imageZoom.main.offsetLeft;
         mouse.dragY = document.body.scrollTop  + e.y - imageZoom.main.offsetTop;
-      } else if (key.meta) {
+      } else if (key.freeze) {
         imageZoom.close.style.opacity = "1";
         imageZoom.frozen = true;
-        key.meta = false;
+        key.freeze = false;
       }
     }
   },
