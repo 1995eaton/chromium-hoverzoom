@@ -222,30 +222,38 @@ imageZoom.appendImage = function(src) {
     this.caption.style.display = "none";
     this.albumIndex.style.display = "none";
   }
-  var img = new Image();
-  img.onload = function() {
-    if (!this.frozen && !this.checkHoveredLink()) {
-      return this.transition.hide();
-    }
+  if (!this.frozen && !this.checkHoveredLink()) {
+    return this.transition.hide();
+  }
+  this.image.onload = function() {
     currentElTemp.style.cursor = "";
-    this.image.src = src;
-    this.height = img.height;
-    this.width = img.width;
-    this.main.style.display = "block";
-    this.image.style.display = "block";
-    this.video.style.display = "none";
-    if (!this.frozen) {
-      this.main.style.transition = "opacity" + this.settings.fadeVal + "s ease-out";
-    } else {
-      this.main.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + this.settings.fadeVal + "s ease-out";
+  };
+  this.height = undefined;
+  this.width  = undefined;
+  this.image.src = src;
+  var imgDimensons = window.setInterval(function() {
+    this.height = this.image.naturalHeight;
+    this.width = this.image.naturalWidth;
+    if (this.height === undefined || this.width === undefined) {
+      this.height = this.image.height;
+      this.width = this.image.width;
     }
-    this.adjustImage();
-    this.transition.in();
-    setTimeout(function() {
-      this.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + this.settings.fadeVal + "s ease-out";
-    }.bind(this), 25);
-  }.bind(this);
-  img.src = src;
+    if (this.height || this.width) {
+      window.clearInterval(imgDimensons);
+      this.adjustImage();
+      this.transition.in();
+      if (this.image.complete) {
+        currentElTemp.style.cursor = "";
+      }
+      window.setTimeout(function() {
+        this.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + this.settings.fadeVal + "s ease-out";
+      }.bind(this), 25);
+    }
+  }.bind(this), 10);
+  this.main.style.transition = "opacity" + this.settings.fadeVal + "s ease-out";
+  this.main.style.display = "block";
+  this.image.style.display = "block";
+  this.video.style.display = "none";
 };
 
 imageZoom.tryMatch = function(f, elem) {

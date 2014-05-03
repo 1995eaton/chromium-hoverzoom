@@ -62,19 +62,16 @@ imgurAlbum = {
       }
       imageZoom.albumIndex.innerText = this.cached[this.id].index + 1 + "/" + albumLength;
       var img = new Image();
-      img.onload = function() {
-        imageZoom.activeEl.style.cursor = "";
-        if (this.isAlbum) {
-          imageZoom.caption.innerText = this.cached[this.id].captions[this.cached[this.id].index];
-          imageZoom.caption.style.display = "block";
-        }
-        if (imageZoom.caption.innerHTML === "") {
-          imageZoom.caption.innerHTML = "";
-          imageZoom.caption.style.display = "none";
-        }
-        imageZoom.appendImage(img.src, true);
-      }.bind(this);
       img.src = this.cached[this.id].images[this.cached[this.id].index];
+      if (this.isAlbum) {
+        imageZoom.caption.innerText = this.cached[this.id].captions[this.cached[this.id].index];
+        imageZoom.caption.style.display = "block";
+      }
+      if (imageZoom.caption.innerHTML === "") {
+        imageZoom.caption.innerHTML = "";
+        imageZoom.caption.style.display = "none";
+      }
+      imageZoom.appendImage(img.src, true);
     }
   }
 
@@ -119,13 +116,7 @@ Sites.gravatar = function(elem, callback) {
   if (!url || !/gravatar\.com/.test(stripUrl(url)) || !basicMatch(url)) {
     return;
   }
-  var img = new Image();
-  img.onload = function() {
-    if (img.width > elem.width) {
-      callback(url);
-    }
-  };
-  img.src = url;
+  callback(url);
 };
 
 Sites.twitter = function(elem, callback) {
@@ -242,13 +233,7 @@ Sites.googleUserContent = function(elem, callback) {
   function trimUrl(url) {
     return url.replace(/\/[a-z][0-9]([^\/]+)(\/([^\/]+)\.(jpg|svg|jpeg|png|gif|tif)$)/i, "/s0$2");
   }
-  var img = new Image();
-  img.onload = function() {
-    if (img.width > elem.width) {
-      callback(img.src);
-    }
-  };
-  img.src = trimUrl(elem.src);
+  callback(trimUrl(elem.src));
 };
 
 Sites.normal = function(elem, callback) {
