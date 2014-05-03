@@ -111,7 +111,7 @@ Sites.github = function(elem, callback) {
   if (!url || !/avatars/.test(url) || !/githubusercontent\.com/.test(stripUrl(url))) {
     return;
   }
-  callback(url);
+  callback(url.replace(/\?.*/, ""));
 };
 
 Sites.gravatar = function(elem, callback) {
