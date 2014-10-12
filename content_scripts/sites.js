@@ -22,7 +22,7 @@ imgurAlbum = {
   getAlbum: function(id) {
     if (!imgurAlbum.cached[id]) {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", "https://api.imgur.com/2/album/" + id.replace(/#.*/, "") + ".json", false);
+      xhr.open('GET', 'https://api.imgur.com/2/album/' + id.replace(/#.*/, '') + '.json', false);
       xhr.onreadystatechange = function() {
         if (xhr.readyState === 4 && xhr.status === 200) {
           var images = JSON.parse(xhr.responseText).album.images;
@@ -43,10 +43,10 @@ imgurAlbum = {
     }
     this.id = id;
     this.isAlbum = true;
-    imageZoom.albumIndex.innerText = this.cached[id].index + 1 + "/" + this.cached[id].images.length;
+    imageZoom.albumIndex.innerText = this.cached[id].index + 1 + '/' + this.cached[id].images.length;
     imageZoom.caption.innerText = this.cached[this.id].captions[this.cached[this.id].index];
-    if (imageZoom.caption.innerText.trim() !== "") {
-      imageZoom.caption.style.display = "block";
+    if (imageZoom.caption.innerText.trim() !== '') {
+      imageZoom.caption.style.display = 'block';
     }
     return this.cached[id].images[this.cached[id].index];
   },
@@ -60,16 +60,16 @@ imgurAlbum = {
       } else {
         this.cached[this.id].index = (index - 1 < 0) ? albumLength - 1 : index - 1;
       }
-      imageZoom.albumIndex.innerText = this.cached[this.id].index + 1 + "/" + albumLength;
+      imageZoom.albumIndex.innerText = this.cached[this.id].index + 1 + '/' + albumLength;
       var img = new Image();
       img.src = this.cached[this.id].images[this.cached[this.id].index];
       if (this.isAlbum) {
         imageZoom.caption.innerText = this.cached[this.id].captions[this.cached[this.id].index];
-        imageZoom.caption.style.display = "block";
+        imageZoom.caption.style.display = 'block';
       }
-      if (imageZoom.caption.innerHTML === "") {
-        imageZoom.caption.innerHTML = "";
-        imageZoom.caption.style.display = "none";
+      if (imageZoom.caption.innerHTML === '') {
+        imageZoom.caption.innerHTML = '';
+        imageZoom.caption.style.display = 'none';
       }
       imageZoom.appendImage(img.src, true);
     }
@@ -85,9 +85,9 @@ stripUrl = function(url) {
   if (!url) {
     return;
   }
-  url = url.replace(/^http(s)?:\/\//, "");
-  url = "." + url.replace(/\/.*/, "");
-  url = url.replace(/.*\.(([^\.]+)\.([^\.]+)$)/, "$1");
+  url = url.replace(/^http(s)?:\/\//, '');
+  url = '.' + url.replace(/\/.*/, '');
+  url = url.replace(/.*\.(([^\.]+)\.([^\.]+)$)/, '$1');
   return url;
 };
 
@@ -108,7 +108,7 @@ Sites.github = function(elem, callback) {
   if (!url || !/avatars/.test(url) || !/githubusercontent\.com/.test(stripUrl(url))) {
     return;
   }
-  callback(url.replace(/\?.*/, ""));
+  callback(url.replace(/\?.*/, ''));
 };
 
 Sites.gravatar = function(elem, callback) {
@@ -121,14 +121,14 @@ Sites.gravatar = function(elem, callback) {
 
 Sites.twitter = function(elem, callback) {
   var img;
-  if (elem.className === "media-overlay" && elem.previousElementSibling.src) {
+  if (elem.className === 'media-overlay' && elem.previousElementSibling.src) {
     img = elem.previousElementSibling.src;
   } else if (/twimg.*_(normal|bigger)/.test(elem.src)) {
-    img = elem.src.replace(/(twimg.*)_(normal|bigger)/, "$1");
+    img = elem.src.replace(/(twimg.*)_(normal|bigger)/, '$1');
   } else if (/twimg/.test(stripUrl(elem.src))) {
-    img = elem.src.replace(/:thumb/, "") + ":large";
+    img = elem.src.replace(/:thumb/, '') + ':large';
   } else if (elem.firstChild && /twimg/.test(elem.firstChild.src)) {
-    img = elem.firstChild.src + ":large";
+    img = elem.firstChild.src + ':large';
   } else if (elem.parentNode && /is-preview/.test(elem.parentNode.className)) {
     img = elem.src;
   }
@@ -142,9 +142,9 @@ Sites.livememe = function(elem, callback) {
   if (base.test(stripUrl(elem.href)) || (elem.parentNode && base.test(stripUrl(elem.parentNode.href)))) {
     base = /[a-zA-Z0-9]{7}/;
     if (elem.href && base.test(elem.href)) {
-      callback(elem.href + ".jpg");
+      callback(elem.href + '.jpg');
     } else if (elem.parentNode.href && base.test(elem.parentNode.href)) {
-      callback(elem.parentNode.href + ".jpg");
+      callback(elem.parentNode.href + '.jpg');
     }
   }
 };
@@ -158,17 +158,17 @@ Sites.imgur = function(elem, callback) {
         return callback(url);
       }
       if (/\/a\//.test(url)) {
-        return callback(imgurAlbum.getAlbum(url.replace(/.*\/a\//, "")));
+        return callback(imgurAlbum.getAlbum(url.replace(/.*\/a\//, '')));
       }
       if (/\/gallery\/(([a-zA-Z0-9]){7})/.test(url)) {
-        return callback(url.replace('/gallery/', '/') + ".jpg");
+        return callback(url.replace('/gallery/', '/') + '.jpg');
       }
       if (/\/gallery\//.test(url)) {
-        return callback(imgurAlbum.getAlbum(url.replace(/.*gallery/, "")));
+        return callback(imgurAlbum.getAlbum(url.replace(/.*gallery/, '')));
       }
-      var suffix = url.replace(new RegExp(".*" + stripUrl(url) + "(\/)?", "i"), "");
+      var suffix = url.replace(new RegExp('.*' + stripUrl(url) + '(\/)?', 'i'), '');
       if (suffix.length === 7) {
-        return callback(url + ".jpg");
+        return callback(url + '.jpg');
       }
     }
   });
@@ -177,9 +177,9 @@ Sites.imgur = function(elem, callback) {
 Sites.wikimedia = function(elem, callback) {
   var url = elem.src;
   if (/(wikipedia|wikimedia)\.org/i.test(stripUrl(url)) && !/\.ogv|\.ogg/.test(url) && basicMatch(url)) {
-    url = url.replace(/\/thumb/, "");
+    url = url.replace(/\/thumb/, '');
     if (/.*\.(png|jpg|jpeg|gif|svg|tif).*\.(png|jpg|jpeg|gif|svg|tif)/i.test(url)) {
-      url = url.replace(/\/([^\/]+)$/, "");
+      url = url.replace(/\/([^\/]+)$/, '');
     }
     callback(url);
   }
@@ -190,13 +190,13 @@ Sites.facebook = function(elem, callback) {
     return false;
   function trimUrl(url) {
     if (url)
-      return url.replace(/\/[tc][0-9]+\.[^\/]+/g, "").replace(/\/[sp][0-9]+x[0-9]+\//, "/").replace(/_[a-z](\.[a-z]+$)/, "_o$1").replace(/\/[a-z]\//, "/");
+      return url.replace(/\/[tc][0-9]+\.[^\/]+/g, '').replace(/\/[sp][0-9]+x[0-9]+\//, '/').replace(/_[a-z](\.[a-z]+$)/, '_o$1').replace(/\/[a-z]\//, '/');
   }
 
   if (/ImageContainer/.test(elem.className) && elem.firstChild && elem.firstChild.src)
     callback(trimUrl(elem.firstChild.src));
-  else if (elem.nodeName === "I" && elem.style.backgroundImage)
-    callback(trimUrl(elem.style.backgroundImage.replace(/^url\(/, "").replace(/\)$/, "")));
+  else if (elem.nodeName === 'I' && elem.style.backgroundImage)
+    callback(trimUrl(elem.style.backgroundImage.replace(/^url\(/, '').replace(/\)$/, '')));
   else {
     var e = elem.firstChild;
     if (e && e.firstChild && e.firstChild.src)
@@ -213,7 +213,7 @@ Sites.deviantart = function(elem, callback) {
         callback(url);
       } else if (/\/art\//i.test(url)) {
         var xhr = new XMLHttpRequest();
-        xhr.open("GET", "https://backend.deviantart.com/oembed?url=" + url);
+        xhr.open('GET', 'https://backend.deviantart.com/oembed?url=' + url);
         xhr.onreadystatechange = function() {
           if (xhr.readyState === 4 && xhr.status === 200) {
             var parsed = JSON.parse(xhr.responseText);
@@ -231,7 +231,7 @@ Sites.googleUserContent = function(elem, callback) {
     return;
   }
   function trimUrl(url) {
-    return url.replace(/\/[a-z][0-9]([^\/]+)(\/([^\/]+)\.(jpg|svg|jpeg|png|gif|tif)$)/i, "/s0$2");
+    return url.replace(/\/[a-z][0-9]([^\/]+)(\/([^\/]+)\.(jpg|svg|jpeg|png|gif|tif)$)/i, '/s0$2');
   }
   callback(trimUrl(elem.src));
 };
@@ -239,27 +239,27 @@ Sites.googleUserContent = function(elem, callback) {
 Sites.normal = function(elem, callback) {
   getUrls([elem, elem.parentNode, elem.parentNode.parentNode]).forEach(function(url) {
     if (basicMatch(url)) {
-      return callback(url.replace(/.*url=/, "").replace(/.*moapi\.net\//, ""));
+      return callback(url.replace(/.*url=/, '').replace(/.*moapi\.net\//, ''));
     }
   });
 };
 
 Sites.gfycat = function(elem, callback) {
-  function getGfySource (url) {
+  function getGfySource(url) {
     var xhr = new XMLHttpRequest();
-    xhr.open("GET", url);
+    xhr.open('GET', url);
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4 && xhr.status === 200) {
         imageZoom.isVideo = true;
-        imageZoom.videoSource.type = "video/webm";
-        callback(xhr.responseText.match(/source id=('|")webmsource('|") src=('|")([^('|")]+)('|")/i)[0].replace(/^.*src=('|")/, "").replace(/('|")$/, ""), xhr.responseText.match(/poster=('|")([^('|")]+)('|")/i)[0].replace(/^.*=('|")/, "").replace(/('|")$/, ""));
+        imageZoom.videoSource.type = 'video/webm';
+        callback(xhr.responseText.match(/source id=["']webmsource["'] src=["']([^"']+)["']/i)[0].replace(/^.*src=["']/, '').replace(/["']$/, ''), xhr.responseText.match(/poster=["']([^["']+)["']/i)[0].replace(/^.*=["']/, '').replace(/["']$/, ''));
       }
     };
     xhr.send();
   }
   getUrls([elem, elem.parentNode]).forEach(function(url) {
     if (!/\.gif$/.test(url) && /gfycat\.com/.test(stripUrl(url))) {
-      getGfySource(url.replace(/[^a-zA-Z_-]+$/, ""));
+      getGfySource(url.replace(/[^a-zA-Z_-]+$/, ''));
       if (imageZoom.isVideo) {
         return;
       }
@@ -271,14 +271,14 @@ Sites.video = function(elem, callback) {
   getUrls([elem, elem.parentNode]).forEach(function(url) {
     if (/\.webm(\?([^?]+))?$/.test(url)) {
       imageZoom.isVideo = true;
-      imageZoom.videoSource.type = "video/webm";
+      imageZoom.videoSource.type = 'video/webm';
       return callback(url);
     } else if (/\.(mp4|m4v)(\?([^?]+))?$/.test(url)) {
-      imageZoom.videoSource.type = "video/mp4";
+      imageZoom.videoSource.type = 'video/mp4';
       imageZoom.isVideo = true;
       return callback(url);
     } else if (/\.ogv(\?([^?]+))?$/.test(url)) {
-      imageZoom.videoSource.type = "video/ogg";
+      imageZoom.videoSource.type = 'video/ogg';
       imageZoom.isVideo = true;
       return callback(url);
     }
@@ -289,12 +289,12 @@ Sites.xkcd = function(elem, callback) {
   getUrls([elem, elem.parentNode]).forEach(function(url) {
     if (/xkcd\.com/i.test(stripUrl(url)) && /xkcd\.com\/([0-9]+)(\/)?$/i.test(url)) {
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", "http://xkcd.com/" + url.replace(/[^0-9]+/g, "") + "/info.0.json");
+      xhr.open('GET', 'http://xkcd.com/' + url.replace(/[^0-9]+/g, '') + '/info.0.json');
       xhr.onreadystatechange = function() {
         if (xhr.readyState === 4 && xhr.status === 200) {
           xhr = xhr.responseText;
-          var img = xhr.replace(/.*(http:\\\/\\\/([^\"]+)\.(png|jpg|jpeg|svg|tif)).*/i, "$1");
-          img = unescape(decodeURIComponent(img.replace(/\\\//g, "/")));
+          var img = xhr.replace(/.*(http:\\\/\\\/([^"]+)\.(png|jpg|jpeg|svg|tif)).*/i, '$1');
+          img = unescape(decodeURIComponent(img.replace(/\\\//g, '/')));
           if (img) {
             callback(img);
           }
@@ -306,15 +306,15 @@ Sites.xkcd = function(elem, callback) {
 };
 
 Sites.flickr = function(elem, callback) {
-  var flickrApiPath = "https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=b5fcc857586ba650aa946ffee502daf2&format=json&photo_id=";
+  var flickrApiPath = 'https://www.flickr.com/services/rest/?method=flickr.photos.getSizes&api_key=b5fcc857586ba650aa946ffee502daf2&format=json&photo_id=';
   getUrls([elem, elem.parentNode]).forEach(function(url) {
     if (/flickr\.com/i.test(stripUrl(url)) && /\/([0-9]){10,11}(\/|$)/i.test(url)) {
-      var photo_id = url.match(/\/([0-9]){10,11}(\/|$)/)[0].replace(/\//g, "");
+      var photo_id = url.match(/\/([0-9]){10,11}(\/|$)/)[0].replace(/\//g, '');
       var xhr = new XMLHttpRequest();
-      xhr.open("GET", flickrApiPath + photo_id);
+      xhr.open('GET', flickrApiPath + photo_id);
       xhr.onreadystatechange = function() {
         if (xhr.readyState === 4 && xhr.status === 200) {
-          var parsed = JSON.parse(xhr.responseText.replace(/.*Api\(/, "").replace(/\)/, "")).sizes.size;
+          var parsed = JSON.parse(xhr.responseText.replace(/.*Api\(/, '').replace(/\)/, '')).sizes.size;
           return callback(parsed[parsed.length - 1].source);
         }
       };

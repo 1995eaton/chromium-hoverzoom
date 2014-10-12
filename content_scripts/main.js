@@ -1,6 +1,6 @@
 var imageZoom = {};
 var onKey, key, mouse, transitionEnd, onMouse, listeners;
-var log = console.log.bind(console);
+log = console.log.bind(console);
 
 function initSites() {
   imageZoom.sites = [
@@ -23,34 +23,34 @@ function initSites() {
 
 imageZoom.init = function() {
 
-  this.main = document.createElement("div");
-  this.main.id = "hvzoom_img_container_main";
+  this.main = document.createElement('div');
+  this.main.id = 'hvzoom_img_container_main';
 
-  this.image = document.createElement("img");
-  this.image.id = "hvzoom_img_container_image";
+  this.image = document.createElement('img');
+  this.image.id = 'hvzoom_img_container_image';
   this.main.appendChild(this.image);
 
-  this.close = document.createElement("div");
-  this.close.id = "hvzoom_img_close_icon";
-  this.close.innerText = "Close";
+  this.close = document.createElement('div');
+  this.close.id = 'hvzoom_img_close_icon';
+  this.close.innerText = 'Close';
   this.main.appendChild(this.close);
 
-  this.caption = document.createElement("div");
-  this.caption.id = "hvzoom_img_container_caption";
+  this.caption = document.createElement('div');
+  this.caption.id = 'hvzoom_img_container_caption';
   this.main.appendChild(this.caption);
 
-  this.albumIndex = document.createElement("div");
-  this.albumIndex.id = "hvzoom_img_album_index";
+  this.albumIndex = document.createElement('div');
+  this.albumIndex.id = 'hvzoom_img_album_index';
   this.main.appendChild(this.albumIndex);
 
-  this.video = document.createElement("video");
-  this.video.id = "hvzoom_img_container_video";
+  this.video = document.createElement('video');
+  this.video.id = 'hvzoom_img_container_video';
   this.video.autoplay = true;
   this.video.loop = true;
 
-  this.videoSource = document.createElement("source");
-  this.videoSource.id = "hvzoom_vid_src";
-  this.videoSource.type = "video/webm";
+  this.videoSource = document.createElement('source');
+  this.videoSource.id = 'hvzoom_vid_src';
+  this.videoSource.type = 'video/webm';
   this.video.appendChild(this.videoSource);
 
   this.main.appendChild(this.video);
@@ -62,53 +62,53 @@ imageZoom.init = function() {
 imageZoom.getImagePosX = function() {
   if (this.main.offsetWidth - 2 * this.settings.offsetVal >= window.innerWidth) {
     if (mouse.x > window.innerWidth / 2)
-      return document.body.scrollLeft + this.settings.offsetVal + "px";
-    return document.body.scrollLeft + window.innerWidth - 2 * this.settings.offsetVal - this.main.offsetWidth + "px";
+      return document.body.scrollLeft + this.settings.offsetVal + 'px';
+    return document.body.scrollLeft + window.innerWidth - 2 * this.settings.offsetVal - this.main.offsetWidth + 'px';
   }
   if (mouse.x > window.innerWidth / 2) {
     if (this.main.offsetWidth > mouse.x - 2 * this.settings.offsetVal)
-      return document.body.scrollLeft + this.settings.offsetVal + "px";
-    return document.body.scrollLeft + mouse.x - this.main.offsetWidth - this.settings.offsetVal + "px";
+      return document.body.scrollLeft + this.settings.offsetVal + 'px';
+    return document.body.scrollLeft + mouse.x - this.main.offsetWidth - this.settings.offsetVal + 'px';
   }
   if (this.main.offsetWidth > window.innerWidth - mouse.x - 3 * this.settings.offsetVal)
-    return document.body.scrollLeft + window.innerWidth - this.main.offsetWidth - 2 * this.settings.offsetVal + "px";
-  return document.body.scrollLeft + mouse.x + this.settings.offsetVal + "px";
+    return document.body.scrollLeft + window.innerWidth - this.main.offsetWidth - 2 * this.settings.offsetVal + 'px';
+  return document.body.scrollLeft + mouse.x + this.settings.offsetVal + 'px';
 };
 
 imageZoom.getImagePosY = function() {
   if (this.main.offsetHeight - 2 * this.settings.offsetVal >= window.innerHeight) {
     if (mouse.y > window.innerHeight / 2)
-      return document.body.scrollTop + window.innerHeight - this.settings.offsetVal - this.main.offsetHeight + "px";
-    return document.body.scrollTop + this.settings.offsetVal + "px";
+      return document.body.scrollTop + window.innerHeight - this.settings.offsetVal - this.main.offsetHeight + 'px';
+    return document.body.scrollTop + this.settings.offsetVal + 'px';
   }
   if (mouse.y > window.innerHeight / 2) {
     if (this.main.offsetHeight / 2 > window.innerHeight - mouse.y - 2 * this.settings.offsetVal) {
       if (this.main.offsetHeight + window.innerHeight - mouse.y + 2 * this.settings.offsetVal > window.innerHeight)
-        return document.body.scrollTop + this.settings.offsetVal + "px";
-      return document.body.scrollTop + mouse.y - this.main.offsetHeight - this.settings.offsetVal + "px";
+        return document.body.scrollTop + this.settings.offsetVal + 'px';
+      return document.body.scrollTop + mouse.y - this.main.offsetHeight - this.settings.offsetVal + 'px';
     }
-    return document.body.scrollTop + mouse.y - this.settings.offsetVal - this.main.offsetHeight / 2 + "px";
+    return document.body.scrollTop + mouse.y - this.settings.offsetVal - this.main.offsetHeight / 2 + 'px';
   }
   if (this.main.offsetHeight / 2 > mouse.y - 2 * this.settings.offsetVal) {
     if (this.main.offsetHeight + mouse.y + 2 * this.settings.offsetVal > window.innerHeight)
-      return document.body.scrollTop + window.innerHeight - this.main.offsetHeight - this.settings.offsetVal + "px";
-    return document.body.scrollTop + mouse.y + this.settings.offsetVal + "px";
+      return document.body.scrollTop + window.innerHeight - this.main.offsetHeight - this.settings.offsetVal + 'px';
+    return document.body.scrollTop + mouse.y + this.settings.offsetVal + 'px';
   }
-  return document.body.scrollTop + mouse.y - this.settings.offsetVal - this.main.offsetHeight / 2 + "px";
+  return document.body.scrollTop + mouse.y - this.settings.offsetVal - this.main.offsetHeight / 2 + 'px';
 };
 
 imageZoom.adjustImage = function() {
   if (this.width > window.innerWidth - 2 * this.settings.offsetVal || this.height > window.innerHeight - 2 * this.settings.offsetVal) {
     if (this.width / window.innerWidth > this.height / window.innerHeight) {
-      this.main.style.width = window.innerWidth - 3 * this.settings.offsetVal + "px";
-      this.main.style.height = (window.innerWidth - 2 * this.settings.offsetVal) / this.width * this.height + "px";
+      this.main.style.width = window.innerWidth - 3 * this.settings.offsetVal + 'px';
+      this.main.style.height = (window.innerWidth - 2 * this.settings.offsetVal) / this.width * this.height + 'px';
     } else {
-      this.main.style.height = window.innerHeight - 2 * this.settings.offsetVal + "px";
-      this.main.style.width = (window.innerHeight - 2 * this.settings.offsetVal) / this.height * this.width + "px";
+      this.main.style.height = window.innerHeight - 2 * this.settings.offsetVal + 'px';
+      this.main.style.width = (window.innerHeight - 2 * this.settings.offsetVal) / this.height * this.width + 'px';
     }
   } else {
-    this.main.style.width = this.width + "px";
-    this.main.style.height = this.height + "px";
+    this.main.style.width = this.width + 'px';
+    this.main.style.height = this.height + 'px';
   }
   if (!this.frozen) {
     this.main.style.left = this.getImagePosX();
@@ -142,7 +142,7 @@ imageZoom.transition = {
     imageZoom.active = true;
     imageZoom.startMonitor();
     this.active = true;
-    imageZoom.main.style.opacity = "1";
+    imageZoom.main.style.opacity = '1';
   },
   out: function() {
     imageZoom.active = false;
@@ -152,51 +152,51 @@ imageZoom.transition = {
     imageZoom.isVideo = false;
     this.active = false;
     imgurAlbum.isAlbum = false;
-    imageZoom.close.style.opacity = "0";
+    imageZoom.close.style.opacity = '0';
     this.fadingOut = true;
-    imageZoom.main.style.opacity = "0";
+    imageZoom.main.style.opacity = '0';
   },
   hide: function() {
-    imageZoom.main.style.display = "none";
+    imageZoom.main.style.display = 'none';
     onMouse.ignore = false;
     this.active = false;
     Sites.foundMatch = false;
     imageZoom.active = false;
-    imageZoom.image.style.display = "none";
-    imageZoom.video.style.display = "none";
+    imageZoom.image.style.display = 'none';
+    imageZoom.video.style.display = 'none';
   }
 };
 
 imageZoom.appendVideo = function(src, elem, poster) {
-  if (this.main.style.display !== "block") {
-    this.image.src = "";
-    this.videoSource.src = "";
+  if (this.main.style.display !== 'block') {
+    this.image.src = '';
+    this.videoSource.src = '';
   }
   var currentElTemp = this.activeEl;
-  this.main.style.transition = "opacity " + this.settings.fadeVal + "s ease-out";
-  this.video.removeAttribute("controls");
-  this.image.style.display = "none";
-  currentElTemp.style.cursor = "wait";
+  this.main.style.transition = 'opacity ' + this.settings.fadeVal + 's ease-out';
+  this.video.removeAttribute('controls');
+  this.image.style.display = 'none';
+  currentElTemp.style.cursor = 'wait';
   if (poster) {
     this.video.poster = poster;
   }
   this.videoSource.src = src;
   this.video.onloadedmetadata = function() {
-    this.main.style.display = "block";
-    this.video.style.display = "block";
+    this.main.style.display = 'block';
+    this.video.style.display = 'block';
     this.height = this.video.videoHeight;
     this.width  = this.video.videoWidth;
     this.adjustImage();
     if (!this.frozen) {
-      this.main.style.transition = "opacity " + this.settings.fadeVal + "s ease-out";
+      this.main.style.transition = 'opacity ' + this.settings.fadeVal + 's ease-out';
     } else {
-      this.main.style.transition = "width 2s ease-out, height 2s ease-out, opacity " + this.settings.fadeVal + "s ease-out";
+      this.main.style.transition = 'width 2s ease-out, height 2s ease-out, opacity ' + this.settings.fadeVal + 's ease-out';
     }
     this.isVideo = true;
     this.transition.in();
     setTimeout(function() {
-      currentElTemp.style.cursor = "";
-      this.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + this.settings.fadeVal + "s ease-out";
+      currentElTemp.style.cursor = '';
+      this.main.style.transition = 'left 0.2s ease-out, top 0.2s ease-out, opacity ' + this.settings.fadeVal + 's ease-out';
     }.bind(this), 25);
   }.bind(this);
   this.video.load();
@@ -208,25 +208,25 @@ imageZoom.appendImage = function(src) {
     return this.transition.hide();
   }
   var currentElTemp = this.activeEl;
-  currentElTemp.style.cursor = "wait";
-  this.main.style.display = "block";
-  this.main.style.transition = "opacity " + this.settings.fadeVal + "s ease-out";
+  currentElTemp.style.cursor = 'wait';
+  this.main.style.display = 'block';
+  this.main.style.transition = 'opacity ' + this.settings.fadeVal + 's ease-out';
   if (imgurAlbum.isAlbum) {
-    if (imgurAlbum.cached[imgurAlbum.id].captions[imgurAlbum.cached[imgurAlbum.id].index] !== "") {
-      this.caption.style.display = "block";
+    if (imgurAlbum.cached[imgurAlbum.id].captions[imgurAlbum.cached[imgurAlbum.id].index] !== '') {
+      this.caption.style.display = 'block';
     } else {
-      this.caption.style.display = "none";
+      this.caption.style.display = 'none';
     }
-    this.albumIndex.style.display = "block";
+    this.albumIndex.style.display = 'block';
   } else {
-    this.caption.style.display = "none";
-    this.albumIndex.style.display = "none";
+    this.caption.style.display = 'none';
+    this.albumIndex.style.display = 'none';
   }
   if (!this.frozen && !this.checkHoveredLink()) {
     return this.transition.hide();
   }
   this.image.onload = function() {
-    currentElTemp.style.cursor = "";
+    currentElTemp.style.cursor = '';
   };
   this.height = undefined;
   this.width  = undefined;
@@ -243,17 +243,17 @@ imageZoom.appendImage = function(src) {
       this.adjustImage();
       this.transition.in();
       if (this.image.complete) {
-        currentElTemp.style.cursor = "";
+        currentElTemp.style.cursor = '';
       }
       window.setTimeout(function() {
-        this.main.style.transition = "left 0.2s ease-out, top 0.2s ease-out, opacity " + this.settings.fadeVal + "s ease-out";
+        this.main.style.transition = 'left 0.2s ease-out, top 0.2s ease-out, opacity ' + this.settings.fadeVal + 's ease-out';
       }.bind(this), 25);
     }
   }.bind(this), 10);
-  this.main.style.transition = "opacity" + this.settings.fadeVal + "s ease-out";
-  this.main.style.display = "block";
-  this.image.style.display = "block";
-  this.video.style.display = "none";
+  this.main.style.transition = 'opacity' + this.settings.fadeVal + 's ease-out';
+  this.main.style.display = 'block';
+  this.image.style.display = 'block';
+  this.video.style.display = 'none';
 };
 
 imageZoom.tryMatch = function(f, elem) {
@@ -298,20 +298,20 @@ imageZoom.closeContainer = function() {
   this.frozen = false;
   mouse.drag = false;
   key.freeze = false;
-  this.main.style.pointerEvents = "none";
+  this.main.style.pointerEvents = 'none';
   this.transition.out();
 };
 
 onKey = {
   down: function(e) {
     if (e.which === 90 && !e.modifiers() && !document.activeElement.isInput()) {
-        imageZoom.disabled = !imageZoom.disabled;
-        if (imageZoom.disabled) {
-          listeners.disable(false, true);
-          imageZoom.closeContainer();
-        } else {
-          listeners.enable(false, true);
-        }
+      imageZoom.disabled = !imageZoom.disabled;
+      if (imageZoom.disabled) {
+        listeners.disable(false, true);
+        imageZoom.closeContainer();
+      } else {
+        listeners.enable(false, true);
+      }
     } else if (imageZoom.active && !e.modifiers() && !document.activeElement.isInput()) {
       switch (e.which) {
         case 39: case 37:
@@ -320,13 +320,13 @@ onKey = {
           }
           break;
         case 67:
-          if (imgurAlbum.isAlbum && imageZoom.caption.innerText.trim() !== "") {
-            imageZoom.caption.style.display = (imageZoom.caption.style.display === "block") ? "none" : "block";
+          if (imgurAlbum.isAlbum && imageZoom.caption.innerText.trim() !== '') {
+            imageZoom.caption.style.display = (imageZoom.caption.style.display === 'block') ? 'none' : 'block';
           }
           break;
         case 72:
           key.freeze = true;
-          imageZoom.main.style.pointerEvents = "auto";
+          imageZoom.main.style.pointerEvents = 'auto';
           break;
         case 32:
           if (imageZoom.isVideo) {
@@ -339,10 +339,10 @@ onKey = {
           break;
         case 65:
           if (imageZoom.active && !imageZoom.isVideo && imageZoom.image.src) {
-            chrome.runtime.sendMessage({action: "openLink", url: imageZoom.image.src});
+            chrome.runtime.sendMessage({action: 'openLink', url: imageZoom.image.src});
             imageZoom.closeContainer();
           } else if (imageZoom.active && imageZoom.isVideo && imageZoom.videoSource.src) {
-            chrome.runtime.sendMessage({action: "openLink", url: imageZoom.videoSource.src});
+            chrome.runtime.sendMessage({action: 'openLink', url: imageZoom.videoSource.src});
             imageZoom.closeContainer();
           }
           break;
@@ -377,7 +377,7 @@ mouse = {
 };
 
 transitionEnd = function(e) {
-  if (!imageZoom.frozen && e.propertyName === "opacity") {
+  if (!imageZoom.frozen && e.propertyName === 'opacity') {
     if (imageZoom.transition.fadingOut) {
       imageZoom.transition.fadingOut = false;
       imageZoom.transition.active = false;
@@ -386,11 +386,11 @@ transitionEnd = function(e) {
       if (!imageZoom.checkHoveredLink()) {
         return imageZoom.transition.out();
       }
-      if (imageZoom.settings.addHistory === "true") {
-        if (imageZoom.activeEl.nodeName === "IMG") {
-          chrome.runtime.sendMessage({action: "addHistory", url: imageZoom.activeEl.parentNode.href});
+      if (imageZoom.settings.addHistory === 'true') {
+        if (imageZoom.activeEl.nodeName === 'IMG') {
+          chrome.runtime.sendMessage({action: 'addHistory', url: imageZoom.activeEl.parentNode.href});
         } else {
-          chrome.runtime.sendMessage({action: "addHistory", url: imageZoom.activeEl.href});
+          chrome.runtime.sendMessage({action: 'addHistory', url: imageZoom.activeEl.href});
         }
       }
     }
@@ -411,8 +411,8 @@ onMouse = {
     if (imageZoom.active) {
       if (mouse.drag) {
         e.preventDefault();
-        imageZoom.main.style.left = document.body.scrollLeft + mouse.x - mouse.dragX + "px";
-        imageZoom.main.style.top  = document.body.scrollTop  + mouse.y - mouse.dragY + "px";
+        imageZoom.main.style.left = document.body.scrollLeft + mouse.x - mouse.dragX + 'px';
+        imageZoom.main.style.top  = document.body.scrollTop  + mouse.y - mouse.dragY + 'px';
       }
       if (imageZoom.linkRect && !imageZoom.frozen && !key.freeze) {
         if (!imageZoom.checkHoveredLink()) {
@@ -433,7 +433,7 @@ onMouse = {
   },
   wheel: function(e) {
     mouse.wheelX = mouse.x; mouse.wheelY = mouse.y;
-    if (imgurAlbum.isAlbum && (imageZoom.settings.scrollAlbum === "true" || imageZoom.frozen)) {
+    if (imgurAlbum.isAlbum && (imageZoom.settings.scrollAlbum === 'true' || imageZoom.frozen)) {
       if (!imageZoom.frozen || (/hvzoom/.test(e.target.id) && imageZoom.frozen)) {
         e.preventDefault();
         if (e.wheelDeltaY < 0) {
@@ -457,17 +457,17 @@ onMouse = {
     }
     if (e.target === imageZoom.image || e.target === imageZoom.video) {
       if (imageZoom.isVideo) {
-        imageZoom.video.setAttribute("controls", "controls");
+        imageZoom.video.setAttribute('controls', 'controls');
       }
       if (imageZoom.frozen) {
         if ((imageZoom.isVideo && e.pageY < imageZoom.main.offsetHeight + imageZoom.main.offsetTop - 40) || !imageZoom.isVideo) {
-          imageZoom.main.style.transition = "opacity " + imageZoom.settings.fadeVal + "s ease-out";
+          imageZoom.main.style.transition = 'opacity ' + imageZoom.settings.fadeVal + 's ease-out';
           mouse.drag = true;
         }
         mouse.dragX = document.body.scrollLeft + e.x - imageZoom.main.offsetLeft;
         mouse.dragY = document.body.scrollTop  + e.y - imageZoom.main.offsetTop;
       } else if (key.freeze) {
-        imageZoom.close.style.opacity = "1";
+        imageZoom.close.style.opacity = '1';
         imageZoom.frozen = true;
         key.freeze = false;
       }
@@ -484,33 +484,33 @@ onMouse = {
 listeners = {
   enable: function(keyOnly, mouseOnly) {
     if (keyOnly) {
-      document.addEventListener("keydown", onKey.down, false);
-      document.addEventListener("keyup", onKey.up, false);
+      document.addEventListener('keydown', onKey.down, false);
+      document.addEventListener('keyup', onKey.up, false);
     }
     if (mouseOnly) {
-      document.addEventListener("mousemove", onMouse.move, false);
-      document.addEventListener("mousedown", onMouse.down, false);
-      document.addEventListener("mouseup", onMouse.up, false);
-      document.addEventListener("mouseleave", onMouse.leave, false);
-      document.addEventListener("mouseover", onMouse.over, false);
-      document.addEventListener("mousewheel", onMouse.wheel, false);
+      document.addEventListener('mousemove', onMouse.move, false);
+      document.addEventListener('mousedown', onMouse.down, false);
+      document.addEventListener('mouseup', onMouse.up, false);
+      document.addEventListener('mouseleave', onMouse.leave, false);
+      document.addEventListener('mouseover', onMouse.over, false);
+      document.addEventListener('mousewheel', onMouse.wheel, false);
     }
-    imageZoom.main.addEventListener("transitionend", transitionEnd, false);
+    imageZoom.main.addEventListener('transitionend', transitionEnd, false);
   },
   disable: function(keyOnly, mouseOnly) {
     if (keyOnly) {
-      document.removeEventListener("keydown", onKey.down, false);
-      document.removeEventListener("keyup", onKey.up, false);
+      document.removeEventListener('keydown', onKey.down, false);
+      document.removeEventListener('keyup', onKey.up, false);
     }
     if (mouseOnly) {
-      document.removeEventListener("mousemove", onMouse.move, false);
-      document.removeEventListener("mouseover", onMouse.over, false);
-      document.removeEventListener("mouseleave", onMouse.leave, false);
-      document.removeEventListener("mousedown", onMouse.down, false);
-      document.removeEventListener("mouseup", onMouse.up, false);
-      document.removeEventListener("mousewheel", onMouse.wheel, false);
+      document.removeEventListener('mousemove', onMouse.move, false);
+      document.removeEventListener('mouseover', onMouse.over, false);
+      document.removeEventListener('mouseleave', onMouse.leave, false);
+      document.removeEventListener('mousedown', onMouse.down, false);
+      document.removeEventListener('mouseup', onMouse.up, false);
+      document.removeEventListener('mousewheel', onMouse.wheel, false);
     }
-    imageZoom.main.removeEventListener("transitionend", transitionEnd, false);
+    imageZoom.main.removeEventListener('transitionend', transitionEnd, false);
   }
 };
 
@@ -518,7 +518,7 @@ function parseSettings(callback) {
   chrome.runtime.sendMessage({getSettings: true}, function(s) {
     var blacklists = s.blacklists.trim();
     if (/\n/.test(blacklists)) {
-      blacklists = blacklists.split("\n");
+      blacklists = blacklists.split('\n');
     } else {
       blacklists = [blacklists];
     }
@@ -535,7 +535,7 @@ function parseSettings(callback) {
 function parseBlacklists(list) {
   list = list.trim();
   if (/\n/.test(list)) {
-    list = list.split("\n");
+    list = list.split('\n');
   } else {
     list = [];
   }
@@ -549,37 +549,41 @@ function parseBlacklists(list) {
 }
 
 function addCustomStylesheet(css) {
-  var style = document.createElement("style");
+  var style = document.createElement('style');
   style.innerText = css;
-  if (document.getElementsByTagName("head").length === 0) {
-    if (document.getElementsByTagName("body").length === 0) {
+  if (document.getElementsByTagName('head').length === 0) {
+    if (document.getElementsByTagName('body').length === 0) {
       return false;
     }
     document.body.appendChild(style);
   } else {
-    document.getElementsByTagName("head")[0].appendChild(style);
+    document.getElementsByTagName('head')[0].appendChild(style);
   }
   return true;
 }
 
 function setup() {
-  imageZoom.init();
-  var b = parseBlacklists(imageZoom.settings.blacklists);
-  if (!b) return false;
-  var s = addCustomStylesheet(imageZoom.settings.cssVal);
-  if (!s) return false;
-  imageZoom.settings.offsetVal = parseInt(imageZoom.settings.offsetVal);
-  initSites();
-  listeners.enable(true, true);
+  if (window.location.host !== 'bugreport.apple.com') {
+    imageZoom.init();
+    if (!parseBlacklists(imageZoom.settings.blacklists)) {
+      return;
+    }
+    if (!addCustomStylesheet(imageZoom.settings.cssVal)) {
+      return;
+    }
+    imageZoom.settings.offsetVal = parseInt(imageZoom.settings.offsetVal);
+    initSites();
+    listeners.enable(true, true);
+  }
 }
 
 parseSettings(function(s) {
-  if (s && typeof s === "object") {
+  if (s && typeof s === 'object') {
     imageZoom.settings = s;
-    if (document.readyState === "complete" || document.readyState === "interactive") {
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
       return setup();
     }
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener('DOMContentLoaded', function() {
       setup();
     }, false);
   }
