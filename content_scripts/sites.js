@@ -151,12 +151,37 @@ Sites.livememe = function(elem, callback) {
 
 
 Sites.imgur = function(elem, callback) {
+  function getGifvSource(url) {
+    imageZoom.isVideo = true;
+    imageZoom.videoSource.type = 'video/webm';
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', url + (/\.gifv$/.test(url) ? "" : "v"));
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        if(xhr.responseText.match(/source src=["']([^"']+)["']/i)) {
+          callback(xhr.responseText.match(/source src=["']([^"']+)["']/i)[0].replace(/^.*src=["']/, '').replace(/["']$/, ''), xhr.responseText.match(/poster=["']([^["']+)["']/i)[0].replace(/^.*=["']/, '').replace(/["']$/, ''));
+        } else {
+          imageZoom.isVideo = false;
+          delete imageZoom.videoSource.type;
+          callback(url);
+        }
+      }
+    };
+    xhr.send();
+  };
+  
   getUrls([elem, elem.parentNode]).forEach(function(url) {
     if (!/\/random/.test(url) && /imgur\.com/i.test(stripUrl(url))) {
       imgurAlbum.isAlbum = false;
+      
+      if (/\.gifv?$/.test(url)) {
+        getGifvSource(url);
+        return;
+      }
       if (basicMatch(url)) {
         return callback(url);
       }
+      
       if (/\/a\//.test(url)) {
         return callback(imgurAlbum.getAlbum(url.replace(/.*\/a\//, '')));
       }
